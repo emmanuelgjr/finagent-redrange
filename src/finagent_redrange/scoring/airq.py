@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 
 
 def score(scenario: Scenario, *, succeeded: bool, controls_on: bool) -> AIRQScore:
+    # DC is the analyst's *asserted* control strength (a heuristic input the scenario declares),
+    # not an empirically measured one — see AIRQScore's docstring caveat.
     dc = scenario.defense_controls_on if controls_on else scenario.defense_controls_off
     # If the attack still succeeded despite controls being "on", the realised control
     # strength is lower than nominal — reflect that so the score stays honest.

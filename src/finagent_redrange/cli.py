@@ -104,6 +104,9 @@ def run(args: argparse.Namespace) -> None:
     auto = autonomous_reports(args.model) if args.controls == "both" else []
     scorecard.write(off, on, RESULTS_DIR, autonomous=auto)
     print(f"Wrote {RESULTS_DIR / 'scorecard.md'} and scorecard.json")
+    if getattr(args, "transcripts", False):
+        scorecard.write_transcripts(off, on, RESULTS_DIR)
+        print(f"Wrote {RESULTS_DIR / 'transcripts.md'} (full conversations)")
     for f in off + on:
         state = "controls-on " if f.guardrails_enabled else "controls-off"
         print(f"  [{state}] {f.scenario_id}: {'EXPLOITED' if f.succeeded else 'blocked'}")
@@ -132,6 +135,11 @@ def main() -> None:
     r = sub.add_parser("run", help="run scenarios and write the scorecard")
     r.add_argument("--model", default="echo", help="echo (offline) | claude")
     r.add_argument("--controls", default="both", choices=["both", "off", "on"])
+    r.add_argument(
+        "--transcripts",
+        action="store_true",
+        help="also dump full conversations to results/transcripts.md (evidence)",
+    )
     r.set_defaults(func=run)
     a = sub.add_parser("auto", help="run the autonomous attacker against an objective")
     a.add_argument("--model", default="echo", help="echo (offline) | claude")

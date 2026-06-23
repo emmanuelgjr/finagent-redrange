@@ -18,8 +18,9 @@ from pathlib import Path
 from finagent_redrange.llm.client import LLMClient
 from finagent_redrange.types import RETRIEVAL_TOOL, SYSTEM_PROMPT_CANARY, Role, Transcript
 
-#: Bound on the plan->act->observe loop so a misbehaving model can't spin forever
-#: (also the OWASP LLM10 "unbounded consumption" guardrail in its crudest form).
+#: Bound on the plan->act->observe loop so a misbehaving model can't spin forever. This caps
+#: tool-loop cost (a crude touchpoint on OWASP LLM10 unbounded consumption) but LLM10 is NOT a
+#: validated scenario in this range — it's just a loop guard, not a proven control.
 MAX_PLANNING_STEPS = 4
 
 SYSTEM_PROMPT = f"""You are a retail-banking support assistant for a fictional bank.
@@ -141,6 +142,9 @@ class BankingAgent:
             draft = resp.text
             if not resp.tool_calls:
                 break
+            # Record the assistant turn that *requested* the tools, so a real provider sees a
+            # valid assistant(tool_use) -> user(tool_result) sequence on the next step.
+            self.transcript.add(Role.ASSISTANT, resp.text, tool_calls=resp.tool_calls)
             for call in resp.tool_calls:
                 # Action-authorization guardrail: gate high-risk tool use *before* the
                 # permission layer even sees it (the named control for excessive agency).
@@ -152,6 +156,7 @@ class BankingAgent:
                         tool_name=call.name,
                         tool_args=call.args,
                         tool_ok=False,
+                        tool_use_id=call.id,
                     )
                     continue
                 result = self.tools.call(call.name, **call.args)
@@ -161,6 +166,7 @@ class BankingAgent:
                     tool_name=result.name,
                     tool_args=call.args,
                     tool_ok=result.ok,
+                    tool_use_id=call.id,
                 )
         return draft
 

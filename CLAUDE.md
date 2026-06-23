@@ -74,7 +74,8 @@ attack lands with controls off and is blocked with controls on.
       `EchoClient` deterministically emits tool calls so the loop is exercised offline.
 - [x] Three more scenarios: **excessive agency** (action-authorization control),
       **system-prompt leakage** (output canary detector), **unsafe output handling** (link
-      sanitiser). Five total; coverage spans 7/10 OWASP LLM Top 10.
+      sanitiser). Five total: dedicated POC+control for 5 primary OWASP risks
+      (LLM01/04/05/06/07), mapped across 7/10 once impact tags (LLM02, LLM09) are counted.
 - [x] **Autonomous attacker** (`attacker/run_autonomous` + `auto` CLI): composes seeds ×
       transforms until an oracle fires; offline-deterministic.
 - [x] Richer scorecard: summary, OWASP coverage matrix, AIRQ off→on, HTML report.
