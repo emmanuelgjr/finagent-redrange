@@ -10,6 +10,8 @@ dist/
 .ruff_cache/
 .pytest_cache/
 .ipynb_checkpoints/
+# editor / agent local settings
+.claude/
 # generated scorecards (keep the dir, ignore artifacts)
 results/*.md
 results/*.json

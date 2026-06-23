@@ -122,9 +122,9 @@ class BankingAgent:
         draft = self.llm.complete(SYSTEM_PROMPT, self.transcript.turns)
 
         go = self.guardrails.check_output(self.tools.session, draft)
-        answer = go.redacted if go.allowed else "I can't share that information."
-        self.transcript.add(Role.ASSISTANT, answer or "")
-        return answer or ""
+        answer = (go.redacted or "") if go.allowed else "I can't share that information."
+        self.transcript.add(Role.ASSISTANT, answer)
+        return answer
 
 
 # Late imports to keep the module graph acyclic at import time.
