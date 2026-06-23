@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/emmanuelgjr/finagent-redrange/actions/workflows/ci.yml/badge.svg)](https://github.com/emmanuelgjr/finagent-redrange/actions/workflows/ci.yml)
 &nbsp;![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
-&nbsp;![Tests](https://img.shields.io/badge/tests-36%20passing-brightgreen)
+&nbsp;![Tests](https://img.shields.io/badge/tests-38%20passing-brightgreen)
 &nbsp;![Lint](https://img.shields.io/badge/lint-ruff-261230?logo=ruff&logoColor=white)
 &nbsp;![Types](https://img.shields.io/badge/types-mypy-2A6DB2)
 &nbsp;![License](https://img.shields.io/badge/license-MIT-success)
@@ -29,7 +29,7 @@ specific guardrails close each one** — end to end, from POC through regression
 | **Coverage** | 5 POC+control scenarios across **7/10** OWASP LLM risks (5 primary + 2 impact) · Agentic T1–T15 · ATLAS · NIST |
 | **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean AIRQ heuristic **High → Medium** |
 | **Extras** | permission-checked tool loop · deterministic strategy-sweep attacker · md / json / **html** scorecard |
-| **Runs** | fully offline & deterministic — **no API key** · 36 tests green in CI (Python 3.11 / 3.12) |
+| **Runs** | fully offline & deterministic — **no API key** · 38 tests green in CI (Python 3.11 / 3.12) |
 | **Try it** | `pip install -e ".[dev]" && python -m finagent_redrange run` |
 
 <p align="center">

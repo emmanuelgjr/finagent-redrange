@@ -11,6 +11,7 @@ By default `run` runs BOTH passes (off then on) so the scorecard shows the mitig
 from __future__ import annotations
 
 import argparse
+import os
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -129,7 +130,30 @@ def run_auto(args: argparse.Namespace) -> None:
         print()
 
 
+def load_dotenv() -> None:
+    """Populate os.environ from a `.env` file (no dependency) so the documented
+    `cp .env.example .env` flow works for real-model runs.
+
+    Looks in the current directory then the repo root; real environment variables always win
+    (a key already set is never overwritten). Supports `KEY=VALUE`, `export KEY=VALUE`, `#`
+    comments, blank lines, and surrounding quotes. Silently does nothing if no `.env` exists.
+    """
+    for base in (Path.cwd(), Path(__file__).resolve().parents[2]):
+        env_path = base / ".env"
+        if not env_path.is_file():
+            continue
+        for raw in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw.strip().removeprefix("export ").strip()
+            if not line or line.startswith("#"):
+                continue
+            key, sep, val = line.partition("=")
+            if sep and (key := key.strip()):
+                os.environ.setdefault(key, val.strip().strip("\"'"))
+        return  # first .env found wins
+
+
 def main() -> None:
+    load_dotenv()
     p = argparse.ArgumentParser(prog="finagent_redrange")
     sub = p.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="run scenarios and write the scorecard")
