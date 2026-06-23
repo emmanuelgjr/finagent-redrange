@@ -1,16 +1,42 @@
-# FinAgent-RedRange
+<div align="center">
 
-**A reproducible red-team range for financial-services AI agents.** Develop proof-of-concept
-exploits against a mock retail-banking agent, then validate that mitigations close them —
-end to end, from POC through regression test. Every finding maps to OWASP, MITRE ATLAS, and
-NIST AI RMF.
+# 🛡️ FinAgent-RedRange
 
-**v0.2** ships **five** attack scenarios, a permission-checked **tool-execution loop**, an
-**autonomous attacker** that composes attacks until a defense breaks, and a richer scorecard
-(markdown + JSON + HTML) — all offline and deterministic, no API key required.
+**A reproducible, _defensive_ red-team range for financial-services AI agents.**
 
-> Defensive research only. The single target is the bundled mock agent. Every exploit ships
-> with the control that blocks it. See [SECURITY.md](SECURITY.md).
+[![CI](https://github.com/emmanuelgjr/finagent-redrange/actions/workflows/ci.yml/badge.svg)](https://github.com/emmanuelgjr/finagent-redrange/actions/workflows/ci.yml)
+&nbsp;![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
+&nbsp;![Tests](https://img.shields.io/badge/tests-33%20passing-brightgreen)
+&nbsp;![Lint](https://img.shields.io/badge/lint-ruff-261230?logo=ruff&logoColor=white)
+&nbsp;![Types](https://img.shields.io/badge/types-mypy-2A6DB2)
+&nbsp;![License](https://img.shields.io/badge/license-MIT-success)
+
+Develop proof-of-concept exploits against a mock retail-banking agent, then **prove that
+specific guardrails close each one** — end to end, from POC through regression test.
+<br/>**Build the attack only to prove the defense.**
+
+</div>
+
+> 🔒 **Defensive research only.** The single target is the bundled mock agent; all data is
+> synthetic. Every exploit ships with the control that blocks it and a regression test that
+> keeps it closed. See [SECURITY.md](SECURITY.md).
+
+### At a glance
+
+|  |  |
+|---|---|
+| **Scenarios** | 5 — prompt injection · data poisoning · excessive agency · system-prompt leakage · unsafe output |
+| **Coverage** | 7 / 10 OWASP LLM Top 10 · OWASP Agentic (T1–T15) · MITRE ATLAS · NIST AI RMF |
+| **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean risk **High → Medium** |
+| **Extras** | permission-checked tool loop · autonomous attacker · md / json / **html** scorecard |
+| **Runs** | fully offline & deterministic — **no API key** · 33 tests green in CI (Python 3.11 / 3.12) |
+| **Try it** | `pip install -e ".[dev]" && python -m finagent_redrange run` |
+
+<p align="center">
+  <img src="docs/scorecard.png" alt="FinAgent-RedRange scorecard — five scenarios exploited with controls off and blocked with controls on, an OWASP coverage matrix, and the autonomous-attacker result" width="900">
+  <br/>
+  <em>The headline artifact: <code>python -m finagent_redrange run</code> regenerates this scorecard (md / json / html).</em>
+</p>
 
 ---
 
@@ -76,7 +102,7 @@ filter. The headline defensive result: *the control holds even against an adapti
 ## Quickstart
 
 ```bash
-git clone <your-fork-url> && cd finagent-redrange
+git clone https://github.com/emmanuelgjr/finagent-redrange.git && cd finagent-redrange
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
