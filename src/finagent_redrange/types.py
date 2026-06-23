@@ -43,6 +43,11 @@ class Turn:
     tool_name: str | None = None
     tool_args: dict | None = None
     tool_ok: bool | None = None
+    #: On an ASSISTANT turn: the tool calls it requested (so the real-model adapter can replay
+    #: the assistant `tool_use` turn the Messages API requires before tool results).
+    tool_calls: list[ToolCall] = field(default_factory=list)
+    #: On a TOOL *result* turn: the id of the call it answers (matches a ToolCall.id).
+    tool_use_id: str | None = None
 
 
 @dataclass
@@ -58,6 +63,8 @@ class Transcript:
         tool_name: str | None = None,
         tool_args: dict | None = None,
         tool_ok: bool | None = None,
+        tool_calls: list[ToolCall] | None = None,
+        tool_use_id: str | None = None,
     ) -> None:
         self.turns.append(
             Turn(
@@ -66,6 +73,8 @@ class Transcript:
                 tool_name=tool_name,
                 tool_args=tool_args,
                 tool_ok=tool_ok,
+                tool_calls=tool_calls or [],
+                tool_use_id=tool_use_id,
             )
         )
 
@@ -83,10 +92,16 @@ class Transcript:
 
 @dataclass
 class ToolCall:
-    """A tool invocation the planner asked for (provider-agnostic)."""
+    """A tool invocation the planner asked for (provider-agnostic).
+
+    ``id`` is the provider's tool-use id, echoed back in the matching tool_result so a real
+    multi-step tool conversation is well-formed. Empty for the offline EchoClient path, which
+    never round-trips through a provider API.
+    """
 
     name: str
     args: dict = field(default_factory=dict)
+    id: str = ""
 
 
 @dataclass
@@ -123,11 +138,17 @@ class FrameworkMapping:
 
 @dataclass
 class AIRQScore:
-    """AI Risk Quadrant sub-scores (1-10) and the derived composite.
+    """AIRQ (AI Risk Quadrant) — an *illustrative analyst heuristic* for ordering work, NOT a
+    calibrated risk metric.
 
-    AS = Attack Surface, BR = Blast Radius, DC = Defense Controls.
-    Higher AS/BR is worse; higher DC is better. Composite intentionally rewards
-    strong controls. Tune the formula in scoring/airq.py.
+    Sub-scores are hand-assigned on a 1-10 anchor scale (1 = negligible, 3 = limited,
+    5 = moderate, 7 = serious, 10 = severe). AS = Attack Surface, BR = Blast Radius,
+    DC = Defense Controls; higher AS/BR is worse, higher DC is better.
+
+    Honesty caveat: the controls-on DC is the control's *nominal/asserted* strength, not an
+    empirically measured one — so the "High -> Medium" shift shows the intended mitigation
+    effect, not a proven residual-risk number. Use the composite to prioritize, never to quote
+    risk to a committee. Tune the formula in scoring/airq.py.
     """
 
     attack_surface: int
@@ -136,7 +157,7 @@ class AIRQScore:
 
     @property
     def composite(self) -> float:
-        return round((self.attack_surface + self.blast_radius) / 2 - self.defense_controls / 2, 2)
+        return round((self.attack_surface + self.blast_radius) / 2 - self.defense_controls / 2, 1)
 
     @property
     def band(self) -> Severity:

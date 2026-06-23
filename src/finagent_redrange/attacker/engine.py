@@ -3,10 +3,11 @@
 Two modes:
   * `run_campaign` — the scripted path: run one Scenario's hand-written campaign and judge it
     with the scenario oracle (the regression-tested backbone of the range).
-  * `run_autonomous` — the adaptive path: an attacker that *composes* seed payloads and
+  * `run_autonomous` — the strategy-sweep path: an attacker that *composes* seed payloads and
     transforms into candidate campaigns and keeps trying until an oracle fires or a budget is
-    spent. The planner is a pluggable seam: the default is deterministic (offline-safe for
-    CI); swap in an LLM-driven planner to make the attacker reason about what to try next.
+    spent. The default planner is a deterministic sweep (a fixed product of seeds × transforms,
+    offline-safe for CI) — NOT adaptive. It's a pluggable seam: swap in an LLM-driven planner to
+    make the attacker actually reason about what to try next.
 """
 
 from __future__ import annotations

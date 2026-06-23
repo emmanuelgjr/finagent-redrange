@@ -98,6 +98,10 @@ def list_transactions(session: Session, account_id: str) -> ToolResult:
 
 
 def create_support_ticket(session: Session, subject: str, body: str) -> ToolResult:
+    # Not account-scoped, but still gated on authentication so *every* tool enforces a
+    # permission check against the session (no anonymous side effects).
+    if not session.is_authenticated:
+        raise PermissionError_("session is not authenticated")
     return ToolResult("create_support_ticket", True, f"Ticket created: {subject!r}")
 
 

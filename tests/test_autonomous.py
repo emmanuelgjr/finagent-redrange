@@ -1,6 +1,6 @@
 """Autonomous-attacker tests (offline, EchoClient).
 
-The adaptive path must honour the same invariant as the scripted scenarios:
+The strategy-sweep path must honour the same invariant as the scripted scenarios:
   1. With controls OFF the attacker can discover a working strategy (the objective is real).
   2. With controls ON a robust defense holds even against every strategy it tries.
 """
@@ -50,7 +50,7 @@ def test_autonomous_blocked_with_controls() -> None:
     # INPUT injection filter; the base64-obfuscated probe slips past input filtering but is
     # caught by the OUTPUT system-prompt-leak detector. No strategy lands.
     report = run_autonomous(lambda: _agent(True), OBJECTIVE, _oracle, SEEDS)
-    assert not report.succeeded, "control must hold even against an adaptive attacker"
+    assert not report.succeeded, "control must hold even against a multi-strategy sweep"
     assert report.winning_strategy is None
     # It really tried every strategy before giving up — not a no-op.
     assert report.attempts_made >= 4
