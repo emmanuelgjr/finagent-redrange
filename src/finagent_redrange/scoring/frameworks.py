@@ -16,6 +16,9 @@ if TYPE_CHECKING:
     from finagent_redrange.scenarios.base import Scenario
 
 # Reference table — id -> human label. Extend or swap for your full standalone crosswalk.
+# IDs were verified against the published standards (OWASP genai.owasp.org, MITRE ATLAS,
+# NIST AI 100-1). Where no honest mapping exists (e.g. an LLM-layer issue with no agentic
+# behaviour), the scenario leaves that field blank rather than forcing a code.
 REFERENCE: dict[str, str] = {
     # OWASP Top 10 for LLM Applications (2025)
     "LLM01": "Prompt Injection",
@@ -28,13 +31,21 @@ REFERENCE: dict[str, str] = {
     "LLM08": "Vector and Embedding Weaknesses",
     "LLM09": "Misinformation",
     "LLM10": "Unbounded Consumption",
-    # OWASP Agentic AI — repo tags aligned to the Agentic Security Initiative threat taxonomy
-    "ASI-01": "Agentic — prompt/instruction manipulation",
-    "ASI-05": "Agentic — knowledge/memory poisoning",
-    # MITRE ATLAS techniques (canonical technique names)
+    # OWASP "Agentic AI — Threats and Mitigations" v1.0 (Feb 2025): the 15 agentic threats.
+    "T1": "Agentic — Memory Poisoning",
+    "T2": "Agentic — Tool Misuse",
+    "T3": "Agentic — Privilege Compromise",
+    "T6": "Agentic — Intent Breaking & Goal Manipulation",
+    # MITRE ATLAS techniques / sub-techniques (canonical names).
     "AML.T0051": "ATLAS — LLM Prompt Injection",
-    "AML.T0020": "ATLAS — Poison Training Data",  # by analogy for RAG/reference poisoning
-    # NIST AI Risk Management Framework (AI RMF 1.0) subcategories
+    "AML.T0051.001": "ATLAS — LLM Prompt Injection: Indirect",
+    "AML.T0020": "ATLAS — Poison Training Data",  # stable ID; T0070 RAG Poisoning is newer
+    "AML.T0048.000": "ATLAS — External Harms: Financial Harm",
+    "AML.T0052.000": "ATLAS — Phishing: Spearphishing via Social Engineering LLM",
+    "AML.T0053": "ATLAS — LLM Plugin Compromise",
+    "AML.T0056": "ATLAS — LLM Meta Prompt Extraction",
+    "AML.T0057": "ATLAS — LLM Data Leakage",
+    # NIST AI Risk Management Framework (AI RMF 1.0 / NIST AI 100-1) subcategories.
     "MEASURE 2.5": "NIST AI RMF — AI system demonstrated to be valid and reliable",
     "MEASURE 2.7": "NIST AI RMF — security & resilience evaluated",
 }

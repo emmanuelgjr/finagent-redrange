@@ -29,14 +29,17 @@ exists to be *blocked* once the corresponding control is enabled.
 ## Architecture
 
 ```
-target/      The system under test: a mock retail-banking agent.
-             agent.py wraps an LLM + tools + guardrails. Guardrails are TOGGLEABLE so
-             you can run "controls off" (POC lands) vs "controls on" (POC blocked).
-attacker/    The red-team engine. engine.py runs a Scenario over multi-turn conversations,
-             records the transcript, and calls the scenario oracle to judge success.
+target/      The system under test: a mock retail-banking agent. agent.py runs a
+             plan->act->observe tool loop over permission-checked tools, with TOGGLEABLE
+             guardrails (input / retrieval / action / output) so you can run "controls off"
+             (POC lands) vs "controls on" (POC blocked).
+attacker/    The red-team engine. engine.run_campaign runs a Scenario's scripted campaign and
+             judges it with the oracle. engine.run_autonomous composes seeds x transforms until
+             an oracle fires (deterministic offline; an LLM-driven planner is the seam).
              seeds.py loads attack seeds (hook to pull from an external incident DB).
-scenarios/   One file per attack class. v0.1 ships indirect prompt injection + data
-             poisoning. Each subclasses scenarios/base.Scenario.
+scenarios/   One file per attack class. v0.2 ships five: indirect prompt injection, data
+             poisoning, excessive agency, system-prompt leakage, unsafe output handling.
+             Each subclasses scenarios/base.Scenario.
 scoring/     frameworks.py maps a Finding to OWASP/ATLAS/NIST IDs (the "crosswalk").
              airq.py scores Attack Surface / Blast Radius / Defense Controls.
              scorecard.py renders the results table (markdown + JSON) into results/.
@@ -51,25 +54,37 @@ Data flow: `cli.run()` → for each `Scenario`: `setup(target)` → `engine.run_
 `scenario.oracle(transcript)` → `Finding` → `frameworks.map_finding()` + `airq.score()` →
 `Scorecard` → `results/scorecard.md`.
 
-## v0.1 milestone (ship this first)
+## Status
 
-Goal: a reviewer can clone, run one command, and see a scorecard proving an attack lands
-with controls off and is blocked with controls on.
+**v0.1 — shipped.** A reviewer can clone, run one command, and see a scorecard proving each
+attack lands with controls off and is blocked with controls on.
 
-- [ ] `llm/client.py`: finish `AnthropicClient.complete()`; keep `EchoClient` deterministic.
-- [ ] `target/`: implement the 5 tools with permission checks; wire RAG over `knowledge/`.
-- [ ] `target/guardrails.py`: implement the input/output checks the two scenarios target.
-- [ ] `scenarios/indirect_prompt_injection.py`: poison a retrieved policy doc; oracle =
-      agent performs an action the injected text requested (e.g. discloses another
-      account's data). Mitigation = output guardrail + retrieval provenance check.
-- [ ] `scenarios/data_poisoning.py`: corrupt the trusted knowledge store; oracle = agent
-      repeats attacker-controlled false policy. Mitigation = source allowlist + integrity check.
-- [ ] `scoring/`: fill the framework lookup tables and AIRQ weights.
-- [ ] `tests/test_regression.py`: with guardrails ON, both scenarios must be blocked.
-- [ ] `notebooks/v0_1_demo.ipynb`: the narrative walkthrough (the recruiter-facing artifact).
+- [x] `llm/client.py`: `AnthropicClient.complete()` returns structured `ModelResponse`;
+      `EchoClient` is deterministic + offline.
+- [x] `target/`: 5 permission-checked tools; RAG over `knowledge/`.
+- [x] `target/guardrails.py`: input / retrieval / action / output checks.
+- [x] `scenarios/indirect_prompt_injection.py` + `scenarios/data_poisoning.py` with oracles.
+- [x] `scoring/`: framework lookup tables + AIRQ weights; scorecard (md/json/html).
+- [x] `tests/test_regression.py`: with guardrails ON, every scenario stays blocked.
+- [x] `notebooks/` narrative walkthrough; CI workflow (ruff + mypy + pytest, 3.11/3.12).
 
-Defer to later: the autonomous attacker-agent loop (`attacker/engine.py` has the seam),
-multimodal attacks, model-theft / supply-chain scenarios, CI workflow.
+**v0.2 — shipped.** Built on v0.1:
+
+- [x] Permission-checked **tool-execution loop** in `target/agent.py` (`MAX_PLANNING_STEPS`);
+      `EchoClient` deterministically emits tool calls so the loop is exercised offline.
+- [x] Three more scenarios: **excessive agency** (action-authorization control),
+      **system-prompt leakage** (output canary detector), **unsafe output handling** (link
+      sanitiser). Five total; coverage spans 7/10 OWASP LLM Top 10.
+- [x] **Autonomous attacker** (`attacker/run_autonomous` + `auto` CLI): composes seeds ×
+      transforms until an oracle fires; offline-deterministic.
+- [x] Richer scorecard: summary, OWASP coverage matrix, AIRQ off→on, HTML report.
+- [x] Hardened via a multi-agent **adversarial review** (oracle soundness, control
+      attribution, framework accuracy, guardrail over-blocking). See `tests/test_guardrails.py`.
+
+**Defer to later (the next roadmap):** an LLM-driven autonomous *planner* (replace the
+deterministic composer), semantic oracles for real-model runs, the remaining OWASP scenarios
+(LLM03 supply chain, LLM08 vector/embedding, LLM10 unbounded consumption), multimodal attacks,
+and seeding the attacker from a real incident corpus (`SeedLibrary.from_incident_db`).
 
 ## Conventions
 
