@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "finagent-redrange"
+version = "0.1.0"
+description = "A reproducible, defensive red-team range for financial-services AI agents."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Emmanuel Guilherme Junior" }]
+keywords = ["ai-security", "llm-security", "red-team", "agentic-ai", "owasp", "mitre-atlas"]
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+# Real-model runs need a provider SDK; keep it optional so the offline suite has no deps.
+anthropic = ["anthropic>=0.39"]
+
+[project.scripts]
+finagent-redrange = "finagent_redrange.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/finagent_redrange"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# Demo notebooks bootstrap sys.path and import where-used for narrative flow; linting them
+# as a single module conflicts with those idioms, so exclude them from the lint surface.
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

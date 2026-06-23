@@ -1,0 +1,2 @@
+# Runtime deps for the offline range. Real-model runs also need: anthropic>=0.39
+pyyaml>=6.0
