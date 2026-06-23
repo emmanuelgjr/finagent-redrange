@@ -21,16 +21,24 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
 - The assurance gap: continuous model/prompt change vs point-in-time testing.
 
 ## 3. Threat model (1–2 pages)
-- The reference agent: planner + tools (balance, transfer, KYC, ticket) + RAG + guardrails.
-- Attack surfaces: indirect prompt injection, data poisoning, excessive agency, model theft,
-  supply chain. Diagram (reuse the README Mermaid).
-- Mapping each surface to OWASP LLM Top 10, OWASP Agentic Top 10 (ASI), MITRE ATLAS.
+- The reference agent: a plan→act→observe tool loop over permission-checked tools (balance,
+  transfer, KYC, ticket, support) + RAG + toggleable guardrails (input / retrieval / action /
+  output).
+- Attack surfaces (implemented): indirect prompt injection, data poisoning, excessive agency,
+  system-prompt leakage, unsafe output handling; (roadmap) model theft, supply chain. Diagram
+  (reuse the README Mermaid).
+- Mapping each surface to OWASP LLM Top 10, OWASP Agentic AI Threats & Mitigations (T1–T15),
+  MITRE ATLAS, and NIST AI RMF. Be explicit where a surface has no honest agentic mapping.
 
 ## 4. Method: a POC-to-validation range (1–2 pages)
 - The core invariant: a finding is only "done" when its control is proven by a regression test.
 - Black/grey-box discipline (attacker touches only the public surface).
 - AIRQ scoring (Attack Surface / Blast Radius / Defense Controls) and why controls-on vs
   controls-off scoring makes the mitigation effect measurable.
+- Two engines: scripted campaigns (the regression backbone) and an **autonomous attacker** that
+  composes seeds × transforms until an oracle fires (deterministic offline; an LLM-planner seam).
+- Self-validation as methodology: a multi-agent **adversarial review** of the harness itself
+  (oracle soundness, control attribution, framework accuracy, guardrail over-blocking).
 - Seeding the attacker from a real-world incident corpus (your incident dataset) — the path
   from curated incidents to executable, framework-mapped test cases.
 
@@ -44,6 +52,14 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
 - Mapping: LLM04 / ASI-05 / AML.T0020.
 - The control (source allowlist + integrity hash) and before/after rows.
 
+## 6b. Case studies 3–5 (brief, ~½ page each)
+- **Excessive agency → autonomous high-value transfer.** LLM06 / Agentic T2·T3 / AML.T0053.
+  Control: action-authorization guardrail (human-in-the-loop for high-risk tool calls).
+- **System-prompt leakage → hidden instructions disclosed.** LLM07 / AML.T0056. Control:
+  output system-prompt-leak detector (canary token + verbatim-span block).
+- **Unsafe output handling → malicious link relayed.** LLM05 / AML.T0052.000. Control: output
+  link/markup sanitiser (domain allowlist).
+
 ## 7. Results (1 page)
 - The scorecard: every scenario exploited with controls off, blocked with controls on.
 - Where automated coverage is strong vs where human review is still required.
@@ -51,7 +67,8 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
 
 ## 8. From range to continuous assurance (½–1 page)
 - Wiring the regression suite into CI; gating GA AI releases on it.
-- The roadmap: autonomous attacker-agent for adaptive, multi-turn campaigns at scale.
+- The roadmap: an LLM-driven autonomous *planner* for adaptive, multi-turn campaigns at scale
+  (the deterministic composer already ships).
 
 ## 9. Recommendations for AI engineering teams (½ page)
 - Prioritised, practical controls keyed to the findings (this is the "advise engineering on

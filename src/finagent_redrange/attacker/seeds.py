@@ -30,8 +30,11 @@ class SeedLibrary:
 
     @classmethod
     def from_yaml(cls, path: Path) -> SeedLibrary:
-        raw = yaml.safe_load(path.read_text()) or []
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or []
         return cls([Seed(**s) for s in raw])
+
+    def all(self) -> list[Seed]:
+        return list(self._seeds)
 
     @classmethod
     def from_incident_db(cls, **kwargs) -> SeedLibrary:

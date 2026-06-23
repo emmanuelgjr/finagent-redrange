@@ -28,7 +28,12 @@ class Scenario(ABC):
 
     @abstractmethod
     def setup(self, agent: BankingAgent) -> None:
-        """Arrange adversarial state (e.g. poison the knowledge store). Idempotent."""
+        """Arrange adversarial state (e.g. poison the knowledge store).
+
+        Called exactly once against a *fresh* agent (engine.run_campaign builds one per run).
+        It is NOT safe to re-invoke on the same agent — inject() appends, so a second call
+        double-poisons the corpus.
+        """
 
     @abstractmethod
     def attack(self, agent: BankingAgent) -> Transcript:

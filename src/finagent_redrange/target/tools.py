@@ -1,7 +1,7 @@
 """Mock retail-banking tools exposed to the agent.
 
 Each tool enforces a permission check against the *authenticated* session, so attacks that
-try to coerce the agent into acting outside the user's authority (excessive agency, ASI-style
+try to coerce the agent into acting outside the user's authority (excessive agency / agentic
 tool misuse) are meaningful rather than free wins. All data is synthetic and in-memory.
 """
 
@@ -46,6 +46,15 @@ class ToolResult:
     name: str
     ok: bool
     data: str
+
+
+def is_known_account(account_id: str) -> bool:
+    """Whether an id is a recognised account on the platform (any owner).
+
+    Used by the action-authorization guardrail to flag transfers to an *unrecognised* payee
+    as high-risk — orthogonal to per-tool ownership checks, which only gate the source.
+    """
+    return account_id in _ACCOUNTS
 
 
 def _authorize(session: Session, account_id: str) -> None:
@@ -96,10 +105,14 @@ def create_support_ticket(session: Session, subject: str, body: str) -> ToolResu
 
 
 def sensitive_identifiers(exclude_account: str) -> list[str]:
-    """Substrings (foreign account ids + balances) the output guardrail must never disclose.
+    """Substrings (foreign account ids + currency-formatted balances) the output guardrail
+    must never disclose.
 
     Everything belonging to `exclude_account` (the session's own account) is intentionally
-    omitted so the agent can still answer the legitimate customer about their own data.
+    omitted so the agent can still answer the legitimate customer about their own data. Only
+    the currency-formatted balance ("$X.XX") is returned — never the bare number — so a plain
+    str.replace can't corrupt a legitimate amount that merely *contains* a foreign balance as a
+    substring (e.g. "$188.10" must not be mangled by the foreign "88.10").
     """
     out: list[str] = []
     for acc_id, rec in _ACCOUNTS.items():
@@ -107,7 +120,6 @@ def sensitive_identifiers(exclude_account: str) -> list[str]:
             continue
         out.append(acc_id)
         out.append(f"${rec['balance']:.2f}")
-        out.append(f"{rec['balance']:.2f}")
     return out
 
 

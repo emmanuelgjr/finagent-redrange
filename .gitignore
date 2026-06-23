@@ -15,3 +15,4 @@ dist/
 # generated scorecards (keep the dir, ignore artifacts)
 results/*.md
 results/*.json
+results/*.html

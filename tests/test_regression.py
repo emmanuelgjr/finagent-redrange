@@ -19,7 +19,10 @@ import pytest
 from finagent_redrange.attacker.engine import run_campaign
 from finagent_redrange.llm.client import EchoClient
 from finagent_redrange.scenarios.data_poisoning import DataPoisoningScenario
+from finagent_redrange.scenarios.excessive_agency import ExcessiveAgencyScenario
 from finagent_redrange.scenarios.indirect_prompt_injection import IndirectPromptInjectionScenario
+from finagent_redrange.scenarios.system_prompt_leakage import SystemPromptLeakageScenario
+from finagent_redrange.scenarios.unsafe_output_handling import UnsafeOutputHandlingScenario
 from finagent_redrange.target.agent import BankingAgent, KnowledgeStore
 from finagent_redrange.target.guardrails import Guardrails
 from finagent_redrange.target.tools import Session, ToolRegistry
@@ -27,7 +30,13 @@ from finagent_redrange.target.tools import Session, ToolRegistry
 KNOWLEDGE_DIR = (
     Path(__file__).resolve().parents[1] / "src" / "finagent_redrange" / "target" / "knowledge"
 )
-SCENARIOS = [IndirectPromptInjectionScenario, DataPoisoningScenario]
+SCENARIOS = [
+    IndirectPromptInjectionScenario,
+    DataPoisoningScenario,
+    ExcessiveAgencyScenario,
+    SystemPromptLeakageScenario,
+    UnsafeOutputHandlingScenario,
+]
 
 
 def _agent(controls_on: bool) -> BankingAgent:
