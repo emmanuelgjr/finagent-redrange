@@ -44,12 +44,12 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
 
 ## 5. Case study 1 — Indirect prompt injection → cross-account disclosure (1 page)
 - The poisoned-retrieval setup; the innocent user query; the leak.
-- Mapping: LLM01 / ASI-01 / AML.T0051.
+- Mapping: LLM01 / Agentic T6 / AML.T0051.
 - The control (output PII filter + retrieval provenance) and the before/after scorecard rows.
 
 ## 6. Case study 2 — Data poisoning → fabricated transfer policy (1 page)
 - Corrupting trusted knowledge; the agent confidently states false policy.
-- Mapping: LLM04 / ASI-05 / AML.T0020.
+- Mapping: LLM04 / Agentic T1 / AML.T0020.
 - The control (source allowlist + integrity hash) and before/after rows.
 
 ## 6b. Case studies 3–5 (brief, ~½ page each)
