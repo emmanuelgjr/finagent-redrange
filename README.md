@@ -30,7 +30,7 @@ specific guardrails close each one** — end to end, from POC through regression
 | **Coverage** | 5 POC+control scenarios across **7/10** OWASP LLM risks (5 primary + 2 impact) · both OWASP agentic schemes — Threats & Mitigations (T1/T2/T3/T6) **and** the 2026 Top 10 for Agentic Applications (ASI01/02/03/06/09) · MITRE ATLAS · NIST AI RMF |
 | **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean AIRQ heuristic **High → Medium** |
 | **Extras** | permission-checked tool loop · deterministic strategy-sweep attacker · md / json / **html** scorecard |
-| **Runs** | fully offline & deterministic — **no API key** · 39 tests green in CI (Python 3.11 / 3.12) |
+| **Runs** | fully offline & deterministic — **no API key** · 47 tests green in CI (Python 3.11 / 3.12) |
 | **Try it** | `pip install -e ".[dev]" && python -m finagent_redrange run` |
 
 <p align="center">
@@ -165,8 +165,11 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
   composer). Next: swap the deterministic planner for an **LLM-driven** one that reasons about
   what to try next.
 - ~~Excessive agency, system-prompt leakage, unsafe output handling scenarios~~ ✅ shipped.
+- ~~Semantic oracles for real-model runs~~ ✅ shipped (`scenarios/judge.py`: an
+  adoption-vs-refutation judge — deterministic offline, a semantic LLM judge on `--model claude`
+  — so a model that quotes a poisoned claim to *refute* it is scored as a refusal, not an exploit).
   Next: fill the remaining OWASP gaps (LLM03 supply chain, LLM08 vector/embedding, LLM10
-  unbounded consumption) and add **semantic oracles** for real-model runs.
+  unbounded consumption).
 - ~~CI regression gate~~ ✅ shipped (ruff + mypy + pytest on Python 3.11/3.12).
 - Seed the attacker from a curated real-world incident corpus (`SeedLibrary.from_incident_db`).
 
