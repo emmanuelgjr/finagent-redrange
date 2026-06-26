@@ -7,6 +7,7 @@ tool misuse) are meaningful rather than free wins. All data is synthetic and in-
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 # --- synthetic data store (fictional) ----------------------------------------------------
@@ -175,9 +176,24 @@ _TOOL_SPECS: dict[str, dict] = {
 
 
 @dataclass
+class ThirdPartyTool:
+    """A tool installed from an external supplier/plugin — the component supply chain (LLM03)."""
+
+    fn: Callable[..., ToolResult]
+    spec: dict
+    publisher: str
+    verified: bool  # is the publisher a trusted/verified supplier?
+
+
+@dataclass
 class ToolRegistry:
     session: Session
+    #: When True (controls on), third-party tools from UNVERIFIED publishers are neither exposed
+    #: to the model nor callable — the supply-chain control (OWASP LLM03). Off by default so a
+    #: malicious plugin lands controls-off.
+    verify_supply_chain: bool = False
     _fns: dict = field(default_factory=dict)
+    _thirdparty: dict[str, ThirdPartyTool] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self._fns = {
@@ -188,18 +204,62 @@ class ToolRegistry:
             "create_support_ticket": create_support_ticket,
         }
 
+    def add_thirdparty(
+        self,
+        name: str,
+        fn: Callable[..., ToolResult],
+        spec: dict,
+        *,
+        publisher: str,
+        verified: bool,
+    ) -> None:
+        """Install a third-party / plugin tool supplied by `publisher` (the component supply
+        chain). Used by scenarios to model a malicious or unverified upstream component."""
+        self._thirdparty[name] = ThirdPartyTool(
+            fn=fn, spec=spec, publisher=publisher, verified=verified
+        )
+
+    def _exposed_thirdparty(self) -> dict[str, ThirdPartyTool]:
+        """Third-party tools the agent may see/use: all of them with supply-chain verification
+        off; only verified-publisher ones when it is on."""
+        if not self.verify_supply_chain:
+            return self._thirdparty
+        return {n: t for n, t in self._thirdparty.items() if t.verified}
+
     def specs(self) -> list[dict]:
         """Tool schemas to hand to the model (Anthropic tool-use format)."""
-        return [
+        core = [
             {"name": name, "description": spec["description"], "input_schema": spec["input_schema"]}
             for name, spec in _TOOL_SPECS.items()
         ]
+        extra = [
+            {
+                "name": name,
+                "description": tp.spec.get("description", ""),
+                "input_schema": tp.spec.get("input_schema", {"type": "object", "properties": {}}),
+            }
+            for name, tp in self._exposed_thirdparty().items()
+        ]
+        return core + extra
 
     def call(self, name: str, **kwargs) -> ToolResult:
         fn = self._fns.get(name)
-        if fn is None:
-            return ToolResult(name, False, f"unknown tool {name}")
-        try:
-            return fn(self.session, **kwargs)
-        except PermissionError_ as e:
-            return ToolResult(name, False, f"DENIED: {e}")
+        if fn is not None:
+            try:
+                return fn(self.session, **kwargs)
+            except PermissionError_ as e:
+                return ToolResult(name, False, f"DENIED: {e}")
+        tp = self._thirdparty.get(name)
+        if tp is not None:
+            if name not in self._exposed_thirdparty():
+                return ToolResult(
+                    name,
+                    False,
+                    f"DENIED: tool {name!r} from unverified publisher {tp.publisher!r} "
+                    "blocked by supply-chain policy",
+                )
+            try:
+                return tp.fn(self.session, **kwargs)
+            except PermissionError_ as e:
+                return ToolResult(name, False, f"DENIED: {e}")
+        return ToolResult(name, False, f"unknown tool {name}")

@@ -36,11 +36,16 @@ class RetrievedChunk:
     text: str
     source: str  # filename / URI the chunk came from
     sha256: str  # content hash, for integrity checks
+    #: Intended audience — the session user this chunk belongs to; None = public/unscoped. The
+    #: retrieval access-control guardrail drops a chunk whose audience isn't the active session,
+    #: however well it matches the query (OWASP LLM08: a shared vector store leaking another
+    #: tenant's record).
+    audience: str | None = None
 
     @staticmethod
-    def of(text: str, source: str) -> RetrievedChunk:
+    def of(text: str, source: str, audience: str | None = None) -> RetrievedChunk:
         digest = hashlib.sha256(text.encode()).hexdigest()
-        return RetrievedChunk(text=text, source=source, sha256=digest)
+        return RetrievedChunk(text=text, source=source, sha256=digest, audience=audience)
 
 
 @dataclass
@@ -84,15 +89,19 @@ class KnowledgeStore:
         return scored[:k]
 
     # -- attacker affordances (used by scenarios only) ---------------------------------
-    def inject(self, text: str, source: str, *, trusted: bool = False) -> None:
+    def inject(
+        self, text: str, source: str, *, trusted: bool = False, audience: str | None = None
+    ) -> None:
         """Add an attacker-controlled chunk (e.g. a poisoned 'policy update').
 
         trusted=False models an untrusted/new source — caught by the allowlist + integrity
         check (the data-poisoning threat). trusted=True models attacker-influenced content
         inside a source the retrieval pipeline already trusts (an edited shared article, an
         ingested note): the allowlist cannot help, so the provenance + output controls must
-        catch it (the indirect-prompt-injection threat)."""
-        chunk = RetrievedChunk.of(text, source=source)
+        catch it (the indirect-prompt-injection threat). ``audience`` scopes a chunk to one
+        session user — a legitimately-stored record that only the retrieval access-control
+        guardrail should keep from a different session (the vector/embedding-weakness threat)."""
+        chunk = RetrievedChunk.of(text, source=source, audience=audience)
         self.chunks.append(chunk)
         if trusted:
             self.trusted_sources.add(source)
@@ -122,7 +131,9 @@ class BankingAgent:
             self.transcript.add(Role.ASSISTANT, answer)
             return answer
 
-        chunks = self.guardrails.check_retrieved(self.knowledge.retrieve(user_text), self.knowledge)
+        chunks = self.guardrails.check_retrieved(
+            self.knowledge.retrieve(user_text), self.knowledge, self.tools.session
+        )
         for c in chunks:
             self.transcript.add(Role.TOOL, c.text, tool_name=RETRIEVAL_TOOL)
 
@@ -150,6 +161,20 @@ class BankingAgent:
             # final guardrailed answer, not this intermediate turn, to stay sound.
             self.transcript.add(Role.ASSISTANT, resp.text, tool_calls=resp.tool_calls)
             for call in resp.tool_calls:
+                # Consumption budget: cap per-request tool calls before anything executes (the
+                # unbounded-consumption control, LLM10). Count successful tool results so far.
+                executed = sum(1 for t in self.transcript.tool_results() if t.tool_ok)
+                gc = self.guardrails.check_consumption(executed)
+                if not gc.allowed:
+                    self.transcript.add(
+                        Role.TOOL,
+                        f"BLOCKED: {gc.reason}",
+                        tool_name=call.name,
+                        tool_args=call.args,
+                        tool_ok=False,
+                        tool_use_id=call.id,
+                    )
+                    continue
                 # Action-authorization guardrail: gate high-risk tool use *before* the
                 # permission layer even sees it (the named control for excessive agency).
                 ga = self.guardrails.check_action(self.tools.session, call)

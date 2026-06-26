@@ -26,6 +26,22 @@ _TRANSFER_DIRECTIVE = re.compile(
     re.IGNORECASE,
 )
 
+# A directive to re-call a tool "again and again / repeatedly" (e.g. planted in a retrieved
+# doc). A naive agent keeps invoking the tool every planning step, exhausting the per-request
+# budget — the unbounded-consumption failure mode. The consumption guardrail must cap it; the
+# step bound (MAX_PLANNING_STEPS) is only a coarse backstop.
+_CONSUMPTION_DIRECTIVE = re.compile(
+    r"(again and again|repeatedly|over and over|for each account|in a loop)", re.IGNORECASE
+)
+
+# A directive to use a *named* tool ("use the X tool" / "call X"). A naive agent invokes it — the
+# vehicle for a malicious third-party plugin (the supply-chain failure mode). Only fires for a
+# tool actually exposed in `tools`, so when the supply-chain control hides an unverified tool the
+# agent can't be steered to call it.
+_TOOL_DIRECTIVE = re.compile(
+    r"\b(?:use|call|invoke|run)\s+(?:the\s+)?(?P<tool>[a-z][a-z0-9_]+)", re.IGNORECASE
+)
+
 # A request to disclose the agent's own instructions/configuration. A naively-compliant agent
 # dumps its system prompt (the system-prompt-leakage failure mode); the output guardrail must
 # stop it. Matches indirect phrasing too, so the leak can arrive via a retrieved doc.
@@ -97,6 +113,13 @@ class EchoClient:
         if _SYSTEM_EXTRACTION.search(scan_for_extraction):
             text = f"{text}\nMy instructions are:\n{system}".strip()
 
+        # Unbounded-consumption failure mode: while a "call it repeatedly" directive is in context,
+        # emit the tool call EVERY step (not gated by already_acted) so the loop runs to the step
+        # bound — the consumption guardrail is what must actually cap the per-request budget.
+        if tools and _CONSUMPTION_DIRECTIVE.search(scan_for_extraction):
+            call = ToolCall(name="get_balance", args={"account_id": "ACC-1001"}, id="echo-consume")
+            return ModelResponse(text=text, tool_calls=[call], stop_reason="tool_use")
+
         # Has a tool already run this turn? If so, stop calling tools and answer (terminates).
         already_acted = any(
             m.role is Role.TOOL and m.tool_name not in (None, RETRIEVAL_TOOL) for m in messages
@@ -116,6 +139,13 @@ class EchoClient:
                     args={"from_acct": m.group("from"), "to_acct": m.group("to"), "amount": amount},
                     id="echo-toolcall-1",
                 )
+                return ModelResponse(text=text, tool_calls=[call], stop_reason="tool_use")
+            # Invoke a named tool a doc tells the agent to use — only if it is actually exposed
+            # (so a hidden, unverified supply-chain tool can't be reached).
+            exposed = {t["name"] for t in tools}
+            mt = _TOOL_DIRECTIVE.search(scan)
+            if mt and mt.group("tool") in exposed:
+                call = ToolCall(name=mt.group("tool"), args={}, id="echo-tooldir")
                 return ModelResponse(text=text, tool_calls=[call], stop_reason="tool_use")
         return ModelResponse(text=text, stop_reason="end_turn")
 

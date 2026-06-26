@@ -26,11 +26,11 @@ specific guardrails close each one** — end to end, from POC through regression
 
 |  |  |
 |---|---|
-| **Scenarios** | 5 — prompt injection · data poisoning · excessive agency · system-prompt leakage · unsafe output |
-| **Coverage** | 5 POC+control scenarios across **7/10** OWASP LLM risks (5 primary + 2 impact) · both OWASP agentic schemes — Threats & Mitigations (T1/T2/T3/T6) **and** the 2026 Top 10 for Agentic Applications (ASI01/02/03/06/09) · MITRE ATLAS · NIST AI RMF |
+| **Scenarios** | 8 — prompt injection · data poisoning · excessive agency · system-prompt leakage · unsafe output · vector/embedding weakness · unbounded consumption · supply chain |
+| **Coverage** | **10/10** OWASP LLM risks (8 dedicated POC+control scenarios + LLM02 & LLM09 as impact tags) · both OWASP agentic schemes — Threats & Mitigations (T1/T2/T3/T4/T6) **and** the 2026 Top 10 for Agentic Applications (ASI01–04, 06, 09) · MITRE ATLAS · NIST AI RMF |
 | **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean AIRQ heuristic **High → Medium** |
-| **Extras** | permission-checked tool loop · deterministic strategy-sweep attacker · md / json / **html** scorecard |
-| **Runs** | fully offline & deterministic — **no API key** · 47 tests green in CI (Python 3.11 / 3.12) |
+| **Extras** | permission-checked tool loop · deterministic strategy-sweep attacker · semantic real-model oracle · md / json / **html** scorecard |
+| **Runs** | fully offline & deterministic — **no API key** · 59 tests green in CI (Python 3.11 / 3.12) |
 | **Try it** | `pip install -e ".[dev]" && python -m finagent_redrange run` |
 
 <p align="center">
@@ -69,11 +69,13 @@ flowchart LR
     classDef atk fill:#fde,stroke:#c39,color:#000;
 ```
 
-**Modeled attack surfaces (v0.2 in bold):** **indirect prompt injection** via retrieved
-documents, **data poisoning** of the trusted knowledge store, **excessive agency / tool
-misuse**, **system-prompt leakage**, **unsafe output handling**, and (roadmap) model theft
-and AI supply-chain attacks. Surfaces and findings are mapped to OWASP LLM Top 10, OWASP
-Agentic AI Threats & Mitigations (T1–T15), MITRE ATLAS, and NIST AI RMF below.
+**Modeled attack surfaces:** **indirect prompt injection** via retrieved documents, **data
+poisoning** of the trusted knowledge store, **excessive agency / tool misuse**, **system-prompt
+leakage**, **unsafe output handling**, **vector/embedding weakness** (cross-session retrieval),
+**unbounded consumption** (tool-budget exhaustion), and **supply chain** (malicious third-party
+tool) — full OWASP LLM Top 10 coverage. Surfaces and findings are mapped to OWASP LLM Top 10,
+both OWASP agentic schemes (Threats & Mitigations T1–T15 and the 2026 Top 10 for Agentic
+Applications ASI01–ASI10), MITRE ATLAS, and NIST AI RMF below.
 
 ## Mitigation-validation results
 
@@ -87,9 +89,12 @@ Run `python -m finagent_redrange run` to regenerate `results/scorecard.{md,json,
 | Excessive agency (autonomous transfer) | LLM06 · LLM01 | T2 · T3 · ASI02 · ASI03 | AML.T0053 | High → Medium | 🔴 exploited | 🟢 blocked | Action-authorization guardrail |
 | System-prompt leakage | LLM07 · LLM01 | — | AML.T0056 | Medium → Low | 🔴 exploited | 🟢 blocked | Output system-prompt-leak detector |
 | Unsafe output handling (malicious link) | LLM05 · LLM02 | ASI09 | AML.T0052.000 | Medium → Low | 🔴 exploited | 🟢 blocked | Output link/markup sanitiser |
+| Vector/embedding weakness (cross-session leak) | LLM08 · LLM02 | ASI03 | AML.T0057 | High → Medium | 🔴 exploited | 🟢 blocked | Access-scoped retrieval |
+| Unbounded consumption (tool-budget exhaustion) | LLM10 | T4 | AML.T0034 | Medium → Low | 🔴 exploited | 🟢 blocked | Per-request tool-call budget |
+| Supply chain (malicious third-party tool) | LLM03 | ASI04 | AML.T0010.001 | High → Medium | 🔴 exploited | 🟢 blocked | Verified-publisher tool allowlist |
 
-*Regenerated on each run. The five scenarios are dedicated POC+control pairs for five **primary**
-OWASP risks (LLM01/04/05/06/07), mapped across **7 of 10** once impact tags (LLM02, LLM09) are
+*Regenerated on each run. The eight scenarios are dedicated POC+control pairs for eight **primary**
+OWASP risks (LLM01/03/04/05/06/07/08/10), covering **all 10** once impact tags (LLM02, LLM09) are
 counted. The Agentic column carries both OWASP agentic schemes — the "Agentic AI — Threats and
 Mitigations" taxonomy (T1–T15) and the 2026 "Top 10 for Agentic Applications" (ASI01–ASI10);
 a cell is **blank** where no honest mapping exists in either. **AIRQ** (a heuristic defined for this project, not an external standard; AS = Attack Surface,
@@ -139,7 +144,7 @@ screen-sharing). All are regenerated on each run; none are committed.
 |---|---|
 | `target/` | The system under test — a mock banking agent: a **plan→act→observe tool loop** over permission-checked tools, with **toggleable** input / retrieval / action / output guardrails |
 | `attacker/` | Red-team engine: scripted `run_campaign` + autonomous `run_autonomous` (composes seeds × transforms until an oracle fires) |
-| `scenarios/` | One attack class per file; v0.2 = indirect prompt injection, data poisoning, excessive agency, system-prompt leakage, unsafe output handling |
+| `scenarios/` | One attack class per file (8): indirect prompt injection, data poisoning, excessive agency, system-prompt leakage, unsafe output handling, vector/embedding weakness, unbounded consumption, supply chain — full OWASP LLM Top 10 coverage |
 | `scoring/` | Framework crosswalk (OWASP / ATLAS / NIST) + AIRQ risk scoring + scorecard renderer (md / json / html) |
 | `llm/` | Provider-agnostic client returning structured `ModelResponse` (text + tool calls); `EchoClient` runs offline for tests, `AnthropicClient` for real-model runs |
 
@@ -168,10 +173,11 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
 - ~~Semantic oracles for real-model runs~~ ✅ shipped (`scenarios/judge.py`: an
   adoption-vs-refutation judge — deterministic offline, a semantic LLM judge on `--model claude`
   — so a model that quotes a poisoned claim to *refute* it is scored as a refusal, not an exploit).
-  Next: fill the remaining OWASP gaps (LLM03 supply chain, LLM08 vector/embedding, LLM10
-  unbounded consumption).
+- ~~Fill the remaining OWASP gaps (LLM03 supply chain, LLM08 vector/embedding, LLM10 unbounded
+  consumption)~~ ✅ shipped — **full OWASP LLM Top 10 coverage** (8 dedicated POC+control scenarios).
 - ~~CI regression gate~~ ✅ shipped (ruff + mypy + pytest on Python 3.11/3.12).
-- Seed the attacker from a curated real-world incident corpus (`SeedLibrary.from_incident_db`).
+- Next: swap the deterministic strategy-sweep planner for an **LLM-driven** one; seed the attacker
+  from a curated real-world incident corpus (`SeedLibrary.from_incident_db`).
 
 ## License & citation
 

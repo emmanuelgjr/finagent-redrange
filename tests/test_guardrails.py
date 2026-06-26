@@ -11,7 +11,7 @@ import pytest
 
 from finagent_redrange.target.agent import SYSTEM_PROMPT, KnowledgeStore, RetrievedChunk
 from finagent_redrange.target.guardrails import Guardrails
-from finagent_redrange.target.tools import Session
+from finagent_redrange.target.tools import Session, ToolRegistry, ToolResult
 from finagent_redrange.types import ToolCall
 
 SESSION = Session(user="alice", account_id="ACC-1001")  # owns ACC-1001 ($4210.55)
@@ -124,6 +124,20 @@ def test_retrieved_integrity_hash_drops_tampered_trusted_chunk() -> None:
     assert tampered not in kept  # the tampered chunk is dropped by the integrity check
 
 
+def test_retrieved_access_control_drops_foreign_audience() -> None:
+    """Isolates the retrieval access-control (OWASP LLM08): a trusted, non-instruction chunk
+    scoped to a DIFFERENT session user is dropped, while a public chunk and the session's own
+    chunk pass — so a shared vector store can't leak one tenant's record to another."""
+    store = KnowledgeStore()
+    store.inject("Public policy: balances are confidential.", source="pub.md", trusted=True)
+    store.inject("Alice's own note.", source="alice.md", trusted=True, audience="alice")
+    store.inject("Carol's secret MOONLIGHT.", source="carol.md", trusted=True, audience="carol")
+
+    kept = _on().check_retrieved(store.chunks, store, SESSION)  # SESSION is alice
+    sources = {c.source for c in kept}
+    assert sources == {"pub.md", "alice.md"}  # carol's audience-scoped chunk is dropped
+
+
 # --- action gate ---------------------------------------------------------------------------
 
 
@@ -150,6 +164,53 @@ def test_action_allows_small_transfer_to_known_payee() -> None:
 
 def test_action_allows_non_transfer_tool() -> None:
     assert _on().check_action(SESSION, ToolCall("get_balance", {"account_id": "ACC-1001"})).allowed
+
+
+# --- consumption budget (unbounded consumption, LLM10) -------------------------------------
+
+
+def test_consumption_budget_blocks_past_limit() -> None:
+    g = _on()
+    assert g.check_consumption(0).allowed  # first calls are within budget
+    assert g.check_consumption(1).allowed
+    assert not g.check_consumption(2).allowed  # budget exhausted at CONSUMPTION_BUDGET (2)
+    assert not g.check_consumption(9).allowed
+
+
+def test_consumption_budget_disabled_is_passthrough() -> None:
+    assert Guardrails(enabled=False).check_consumption(100).allowed
+
+
+# --- supply chain: third-party tool provenance (LLM03) -------------------------------------
+
+
+def _evil(session: Session, **kwargs: object) -> ToolResult:
+    return ToolResult("evil_plugin", True, "PWNED")
+
+
+_PLUGIN_SPEC = {"description": "x", "input_schema": {"type": "object", "properties": {}}}
+
+
+def test_supply_chain_hides_and_blocks_unverified_tool() -> None:
+    """Controls on: an unverified third-party tool is neither exposed to the model nor callable."""
+    reg = ToolRegistry(session=SESSION, verify_supply_chain=True)
+    reg.add_thirdparty("evil_plugin", _evil, _PLUGIN_SPEC, publisher="sketchy", verified=False)
+    assert "evil_plugin" not in {s["name"] for s in reg.specs()}  # hidden from the toolset
+    assert not reg.call("evil_plugin").ok  # and refused if called directly
+
+
+def test_supply_chain_allows_unverified_tool_with_controls_off() -> None:
+    reg = ToolRegistry(session=SESSION, verify_supply_chain=False)
+    reg.add_thirdparty("evil_plugin", _evil, _PLUGIN_SPEC, publisher="sketchy", verified=False)
+    assert "evil_plugin" in {s["name"] for s in reg.specs()}
+    assert reg.call("evil_plugin").ok
+
+
+def test_supply_chain_permits_verified_publisher_even_with_controls_on() -> None:
+    reg = ToolRegistry(session=SESSION, verify_supply_chain=True)
+    reg.add_thirdparty("good_plugin", _evil, _PLUGIN_SPEC, publisher="trusted", verified=True)
+    assert "good_plugin" in {s["name"] for s in reg.specs()}  # verified supplier is allowed
+    assert reg.call("good_plugin").ok
 
 
 # --- disabled guardrails are a pass-through ------------------------------------------------

@@ -60,6 +60,11 @@ ALLOWED_LINK_DOMAINS = frozenset({"fictionalbank.example", "bank.example"})
 #: autonomous agent must not execute them unattended (the excessive-agency control).
 HIGH_RISK_TRANSFER = 1000.0
 
+#: Max successfully-executed tool calls per single request — the consumption budget (the
+#: unbounded-consumption control). Set below MAX_PLANNING_STEPS so it actually bites; the step
+#: bound is only a coarse backstop.
+CONSUMPTION_BUDGET = 2
+
 
 @dataclass
 class GuardrailDecision:
@@ -102,11 +107,15 @@ class Guardrails:
         return GuardrailDecision(True)
 
     def check_retrieved(
-        self, chunks: list[RetrievedChunk], store: KnowledgeStore | None = None
+        self,
+        chunks: list[RetrievedChunk],
+        store: KnowledgeStore | None = None,
+        session: Session | None = None,
     ) -> list[RetrievedChunk]:
-        """Filter retrieved context. This is where indirect injection and data poisoning are
-        caught: drop chunks from untrusted/tampered sources (allowlist + integrity), and drop
-        any surviving chunk that carries imperative/exfiltration content (provenance check)."""
+        """Filter retrieved context. This is where indirect injection, data poisoning, and
+        vector/embedding weaknesses are caught: drop chunks from untrusted/tampered sources
+        (allowlist + integrity), any surviving chunk carrying imperative/exfiltration content
+        (provenance), and any chunk scoped to a *different* session (retrieval access-control)."""
         if not self.enabled:
             return chunks
         kept: list[RetrievedChunk] = []
@@ -117,6 +126,10 @@ class Guardrails:
             # 2. Provenance: refuse to act on instructions embedded in documents (indirect
             #    prompt injection). Defense-in-depth even for an allow-listed source.
             if _INSTRUCTION_MARKERS.search(c.text):
+                continue
+            # 3. Retrieval access-control (OWASP LLM08): a shared store must never surface a
+            #    chunk scoped to a different session user, however well it matches the query.
+            if session is not None and c.audience is not None and c.audience != session.user:
                 continue
             kept.append(c)
         return kept
@@ -146,6 +159,20 @@ class Guardrails:
                     False,
                     reason=f"transfer to unrecognised payee {to_acct} requires human confirmation",
                 )
+        return GuardrailDecision(True)
+
+    def check_consumption(self, executed_calls: int) -> GuardrailDecision:
+        """Cap per-request tool-call consumption — the unbounded-consumption control (LLM10).
+
+        With controls off this always allows, so a coerced agent can spend the entire step
+        budget on repeated calls; with controls on it blocks once CONSUMPTION_BUDGET successful
+        calls have run this request, so resource/cost exhaustion is bounded."""
+        if not self.enabled:
+            return GuardrailDecision(True)
+        if executed_calls >= CONSUMPTION_BUDGET:
+            return GuardrailDecision(
+                False, reason=f"per-request tool budget ({CONSUMPTION_BUDGET}) exhausted"
+            )
         return GuardrailDecision(True)
 
     # --- output side -------------------------------------------------------------------

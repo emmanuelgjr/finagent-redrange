@@ -22,8 +22,11 @@ from finagent_redrange.llm.client import get_client
 from finagent_redrange.scenarios.data_poisoning import DataPoisoningScenario
 from finagent_redrange.scenarios.excessive_agency import ExcessiveAgencyScenario
 from finagent_redrange.scenarios.indirect_prompt_injection import IndirectPromptInjectionScenario
+from finagent_redrange.scenarios.supply_chain import SupplyChainScenario
 from finagent_redrange.scenarios.system_prompt_leakage import SystemPromptLeakageScenario
+from finagent_redrange.scenarios.unbounded_consumption import UnboundedConsumptionScenario
 from finagent_redrange.scenarios.unsafe_output_handling import UnsafeOutputHandlingScenario
+from finagent_redrange.scenarios.vector_embedding_weakness import VectorEmbeddingWeaknessScenario
 from finagent_redrange.scoring import scorecard
 from finagent_redrange.target.agent import BankingAgent, KnowledgeStore
 from finagent_redrange.target.guardrails import Guardrails
@@ -49,6 +52,9 @@ SCENARIOS: list[Scenario] = [
     ExcessiveAgencyScenario(),
     SystemPromptLeakageScenario(),
     UnsafeOutputHandlingScenario(),
+    VectorEmbeddingWeaknessScenario(),
+    UnboundedConsumptionScenario(),
+    SupplyChainScenario(),
 ]
 
 
@@ -59,7 +65,7 @@ def build_agent(model: str, controls_on: bool) -> BankingAgent:
         llm=get_client(model),
         knowledge=KnowledgeStore.from_dir(KNOWLEDGE_DIR),
         guardrails=Guardrails(enabled=controls_on),
-        tools=ToolRegistry(session=session),
+        tools=ToolRegistry(session=session, verify_supply_chain=controls_on),
     )
 
 

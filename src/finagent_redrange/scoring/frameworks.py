@@ -35,6 +35,7 @@ REFERENCE: dict[str, str] = {
     "T1": "Agentic — Memory Poisoning",
     "T2": "Agentic — Tool Misuse",
     "T3": "Agentic — Privilege Compromise",
+    "T4": "Agentic — Resource Overload",
     "T6": "Agentic — Intent Breaking & Goal Manipulation",
     # OWASP "Top 10 for Agentic Applications" 2026 (the ranked agentic Top 10, ASI01–ASI10) —
     # the newer, incident-grounded benchmark that complements the T1–T15 taxonomy above.
@@ -50,6 +51,10 @@ REFERENCE: dict[str, str] = {
     "ASI10": "Agentic Top 10 — Rogue Agents",
     # MITRE ATLAS techniques / sub-techniques (canonical names, verified June 2026 against the
     # live atlas.mitre.org matrix / mitre-atlas/atlas-data).
+    "AML.T0010": "ATLAS — AI Supply Chain Compromise",
+    "AML.T0010.001": "ATLAS — AI Supply Chain Compromise: AI Software",
+    "AML.T0034": "ATLAS — Cost Harvesting",
+    "AML.T0029": "ATLAS — Denial of AI Service",
     "AML.T0051": "ATLAS — LLM Prompt Injection",
     "AML.T0051.001": "ATLAS — LLM Prompt Injection: Indirect",
     "AML.T0070": "ATLAS — RAG Poisoning",  # runtime RAG-corpus poisoning (the data-poisoning fit)

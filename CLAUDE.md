@@ -37,9 +37,11 @@ attacker/    The red-team engine. engine.run_campaign runs a Scenario's scripted
              judges it with the oracle. engine.run_autonomous composes seeds x transforms until
              an oracle fires (deterministic offline; an LLM-driven planner is the seam).
              seeds.py loads attack seeds (hook to pull from an external incident DB).
-scenarios/   One file per attack class. v0.2 ships five: indirect prompt injection, data
-             poisoning, excessive agency, system-prompt leakage, unsafe output handling.
-             Each subclasses scenarios/base.Scenario.
+scenarios/   One file per attack class. v0.3 ships eight (full OWASP LLM Top 10 coverage):
+             indirect prompt injection, data poisoning, excessive agency, system-prompt leakage,
+             unsafe output handling, vector/embedding weakness, unbounded consumption, supply
+             chain. judge.py holds the semantic adoption-vs-refutation oracle. Each scenario
+             subclasses scenarios/base.Scenario.
 scoring/     frameworks.py maps a Finding to OWASP/ATLAS/NIST IDs (the "crosswalk").
              airq.py scores Attack Surface / Blast Radius / Defense Controls.
              scorecard.py renders the results table (markdown + JSON) into results/.
@@ -82,9 +84,14 @@ attack lands with controls off and is blocked with controls on.
 - [x] Hardened via a multi-agent **adversarial review** (oracle soundness, control
       attribution, framework accuracy, guardrail over-blocking). See `tests/test_guardrails.py`.
 
+**v0.3 — shipped.** Full OWASP LLM Top 10 coverage: three more scenarios (vector/embedding
+weakness → access-scoped retrieval; unbounded consumption → per-request tool budget; supply
+chain → verified-publisher tool allowlist), an OWASP Agentic Top 10 (ASI01–ASI10) crosswalk
+alongside the T1–T15 codes, and a semantic adoption-vs-refutation oracle (`scenarios/judge.py`)
+that fixes the real-model keyword false positive. Relicensed Apache-2.0 (code) + CC BY 4.0 (docs).
+
 **Defer to later (the next roadmap):** an LLM-driven autonomous *planner* (replace the
-deterministic composer), semantic oracles for real-model runs, the remaining OWASP scenarios
-(LLM03 supply chain, LLM08 vector/embedding, LLM10 unbounded consumption), multimodal attacks,
+deterministic composer), multimodal attacks,
 and seeding the attacker from a real incident corpus (`SeedLibrary.from_incident_db`).
 
 ## Conventions
