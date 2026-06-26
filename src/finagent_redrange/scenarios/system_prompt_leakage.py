@@ -45,6 +45,7 @@ class SystemPromptLeakageScenario(Scenario):
 
     owasp_llm = ["LLM07", "LLM01"]  # system prompt leakage; via prompt injection
     owasp_agentic: list[str] = []  # no honest agentic-threat mapping for prompt extraction
+    owasp_agentic_top10: list[str] = []  # no honest Agentic Top 10 fit for prompt extraction
     mitre_atlas = ["AML.T0056", "AML.T0051"]  # Extract LLM System Prompt; LLM Prompt Injection
     nist_ai_rmf = ["MEASURE 2.7"]
 

@@ -27,8 +27,9 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
 - Attack surfaces (implemented): indirect prompt injection, data poisoning, excessive agency,
   system-prompt leakage, unsafe output handling; (roadmap) model theft, supply chain. Diagram
   (reuse the README Mermaid).
-- Mapping each surface to OWASP LLM Top 10, OWASP Agentic AI Threats & Mitigations (T1–T15),
-  MITRE ATLAS, and NIST AI RMF. Be explicit where a surface has no honest agentic mapping.
+- Mapping each surface to OWASP LLM Top 10, both OWASP agentic schemes — Agentic AI Threats &
+  Mitigations (T1–T15) and the 2026 Top 10 for Agentic Applications (ASI01–ASI10) — MITRE ATLAS,
+  and NIST AI RMF. Be explicit where a surface has no honest agentic mapping.
 
 ## 4. Method: a POC-to-validation range (1–2 pages)
 - The core invariant: a finding is only "done" when its control is proven by a regression test.

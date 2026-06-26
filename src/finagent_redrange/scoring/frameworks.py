@@ -36,6 +36,18 @@ REFERENCE: dict[str, str] = {
     "T2": "Agentic — Tool Misuse",
     "T3": "Agentic — Privilege Compromise",
     "T6": "Agentic — Intent Breaking & Goal Manipulation",
+    # OWASP "Top 10 for Agentic Applications" 2026 (the ranked agentic Top 10, ASI01–ASI10) —
+    # the newer, incident-grounded benchmark that complements the T1–T15 taxonomy above.
+    "ASI01": "Agentic Top 10 — Agent Goal Hijack",
+    "ASI02": "Agentic Top 10 — Tool Misuse & Exploitation",
+    "ASI03": "Agentic Top 10 — Identity & Privilege Abuse",
+    "ASI04": "Agentic Top 10 — Agentic Supply Chain Vulnerabilities",
+    "ASI05": "Agentic Top 10 — Unexpected Code Execution",
+    "ASI06": "Agentic Top 10 — Memory & Context Poisoning",
+    "ASI07": "Agentic Top 10 — Insecure Inter-Agent Communication",
+    "ASI08": "Agentic Top 10 — Cascading Failures",
+    "ASI09": "Agentic Top 10 — Human-Agent Trust Exploitation",
+    "ASI10": "Agentic Top 10 — Rogue Agents",
     # MITRE ATLAS techniques / sub-techniques (canonical names, verified June 2026 against the
     # live atlas.mitre.org matrix / mitre-atlas/atlas-data).
     "AML.T0051": "ATLAS — LLM Prompt Injection",
@@ -61,6 +73,7 @@ def map_finding(scenario: Scenario) -> FrameworkMapping:
     return FrameworkMapping(
         owasp_llm=list(scenario.owasp_llm),
         owasp_agentic=list(scenario.owasp_agentic),
+        owasp_agentic_top10=list(scenario.owasp_agentic_top10),
         mitre_atlas=list(scenario.mitre_atlas),
         nist_ai_rmf=list(scenario.nist_ai_rmf),
     )

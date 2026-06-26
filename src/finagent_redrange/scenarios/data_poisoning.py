@@ -47,6 +47,7 @@ class DataPoisoningScenario(Scenario):
 
     owasp_llm = ["LLM04", "LLM09"]  # vector: data poisoning; impact: misinformation
     owasp_agentic = ["T1"]  # Memory Poisoning (the RAG store is the agent's knowledge)
+    owasp_agentic_top10 = ["ASI06"]  # Memory & Context Poisoning
     mitre_atlas = ["AML.T0070", "AML.T0020"]  # RAG Poisoning (runtime); Poison Training Data (rel.)
     nist_ai_rmf = ["MEASURE 2.5", "MEASURE 2.7"]  # valid & reliable; security & resilience
 

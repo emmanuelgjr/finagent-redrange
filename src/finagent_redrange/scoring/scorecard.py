@@ -25,6 +25,10 @@ if TYPE_CHECKING:
 # The full OWASP LLM Top 10 (2025), so the coverage matrix shows gaps as well as hits.
 _ALL_LLM = [f"LLM{i:02d}" for i in range(1, 11)]
 
+# The OWASP Top 10 for Agentic Applications (2026) — ASI01..ASI10 — so the agentic coverage
+# matrix shows gaps as well as hits, the same way the LLM matrix does.
+_ALL_ASI = [f"ASI{i:02d}" for i in range(1, 11)]
+
 # Plain (non-f) string so CSS braces need no escaping; kept under the line-length limit.
 _HTML_STYLE = """
  :root { color-scheme: light dark; }
@@ -117,6 +121,15 @@ def _coverage(findings_off: list[Finding]) -> dict[str, list[str]]:
     return cov
 
 
+def _coverage_asi(findings_off: list[Finding]) -> dict[str, list[str]]:
+    """OWASP Agentic Top 10 (ASI) id -> titles of scenarios exercising it (empty = not covered)."""
+    cov: dict[str, list[str]] = {asi: [] for asi in _ALL_ASI}
+    for f in findings_off:
+        for asi in f.frameworks.owasp_agentic_top10:
+            cov.setdefault(asi, []).append(f.title)
+    return cov
+
+
 # --- markdown -----------------------------------------------------------------------------
 
 
@@ -148,14 +161,14 @@ def render_markdown(
         "",
         "## Mitigation-validation results",
         "",
-        "| Scenario | OWASP LLM | Agentic | ATLAS | NIST | AIRQ off (AS/BR/DC) | "
+        "| Scenario | OWASP LLM | Agentic (T&M · Top 10) | ATLAS | NIST | AIRQ off (AS/BR/DC) | "
         "AIRQ on (AS/BR/DC) | Controls off | Controls on | Validating control |",
         "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for off in findings_off:
         on = on_by_id.get(off.scenario_id)
         fw = off.frameworks
-        agentic = " · ".join(fw.owasp_agentic) or "—"
+        agentic = " · ".join([*fw.owasp_agentic, *fw.owasp_agentic_top10]) or "—"
         atlas = ", ".join(fw.mitre_atlas) or "—"
         nist = ", ".join(fw.nist_ai_rmf) or "—"
         lines.append(
@@ -178,6 +191,20 @@ def render_markdown(
         hits = cov.get(llm, [])
         mark = "✅ " + "; ".join(sorted(set(hits))) if hits else "—"
         lines.append(f"| {llm} | {frameworks.label(llm)} | {mark} |")
+
+    # OWASP Agentic Top 10 (2026) coverage matrix.
+    cov_asi = _coverage_asi(findings_off)
+    lines += [
+        "",
+        "## OWASP Top 10 for Agentic Applications (2026) coverage",
+        "",
+        "| ID | Risk | Exercised by |",
+        "|---|---|---|",
+    ]
+    for asi in _ALL_ASI:
+        hits = cov_asi.get(asi, [])
+        mark = "✅ " + "; ".join(sorted(set(hits))) if hits else "—"
+        lines.append(f"| {asi} | {frameworks.label(asi).split('— ', 1)[-1]} | {mark} |")
 
     # Autonomous attacker.
     if autonomous:
@@ -207,8 +234,10 @@ def render_markdown(
         "retrieval-corpus attack, with AML.T0020 (Poison Training Data) as its training-time "
         "relative; excessive agency uses AML.T0053 (AI Agent Tool Invocation), with the agentic "
         "T2/T3 codes adding tool-misuse / privilege context.",
-        "- A blank **Agentic** cell means no honest OWASP Agentic (T1-T15) mapping exists for that "
-        "scenario, rather than a forced one.",
+        '- The **Agentic** column carries both OWASP agentic schemes: the **T1–T15** "Threats & '
+        'Mitigations" taxonomy and the 2026 **Top 10 for Agentic Applications** (ASI01–ASI10). A '
+        "blank cell means no honest mapping in *either* scheme exists for that scenario, not a "
+        "forced one.",
     ]
     return "\n".join(lines) + "\n"
 
@@ -237,7 +266,7 @@ def render_html(
             "<tr>"
             f"<td>{off.title}</td>"
             f"<td>{' · '.join(fw.owasp_llm)}</td>"
-            f"<td>{' · '.join(fw.owasp_agentic) or '—'}</td>"
+            f"<td>{' · '.join([*fw.owasp_agentic, *fw.owasp_agentic_top10]) or '—'}</td>"
             f"<td>{', '.join(fw.mitre_atlas) or '—'}</td>"
             f"<td>{off.airq.composite} <em>{off.airq.band.value}</em></td>"
             f"<td>{on.airq.composite if on else '—'} "
@@ -257,6 +286,18 @@ def render_html(
     cov_rows = "".join(
         f"<tr><td>{llm}</td><td>{frameworks.label(llm)}</td><td>{cov_cell(llm)}</td></tr>"
         for llm in _ALL_LLM
+    )
+
+    cov_asi = _coverage_asi(findings_off)
+
+    def cov_asi_cell(asi: str) -> str:
+        hits = sorted(set(cov_asi.get(asi, [])))
+        return "✅ " + "; ".join(hits) if hits else "—"
+
+    cov_asi_rows = "".join(
+        f"<tr><td>{asi}</td><td>{frameworks.label(asi).split('— ', 1)[-1]}</td>"
+        f"<td>{cov_asi_cell(asi)}</td></tr>"
+        for asi in _ALL_ASI
     )
 
     auto_html = ""
@@ -304,18 +345,22 @@ and <b>blocked</b> with controls on.</p>
 <div class="cards">{cards}</div>
 <h2>Mitigation-validation results</h2>
 <table><thead><tr>
- <th>Scenario</th><th>OWASP LLM</th><th>Agentic</th><th>ATLAS</th>
+ <th>Scenario</th><th>OWASP LLM</th><th>Agentic (T&amp;M · Top 10)</th><th>ATLAS</th>
  <th>AIRQ off</th><th>AIRQ on</th><th>Controls off</th><th>Controls on</th>
  <th>Validating control</th>
 </tr></thead><tbody>{"".join(rows)}</tbody></table>
 <h2>OWASP LLM Top 10 (2025) coverage</h2>
 <table><thead><tr><th>ID</th><th>Risk</th><th>Exercised by</th></tr></thead>
 <tbody>{cov_rows}</tbody></table>
+<h2>OWASP Top 10 for Agentic Applications (2026) coverage</h2>
+<table><thead><tr><th>ID</th><th>Risk</th><th>Exercised by</th></tr></thead>
+<tbody>{cov_asi_rows}</tbody></table>
 {auto_html}
 <footer>Generated by <code>python -m finagent_redrange run</code>. All data synthetic; single
 target is the bundled mock agent. AIRQ is an illustrative analyst heuristic (asserted DC), not
-a calibrated metric; ATLAS rows are closest-fit; a blank Agentic cell means no honest
-T1–T15 mapping.</footer>
+a calibrated metric; ATLAS rows are closest-fit; the Agentic column carries both the OWASP
+T1–T15 taxonomy and the 2026 Top 10 (ASI01–ASI10), and a blank cell means no honest mapping in
+either scheme.</footer>
 </body></html>
 """
 

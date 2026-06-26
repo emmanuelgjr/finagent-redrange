@@ -27,7 +27,7 @@ specific guardrails close each one** — end to end, from POC through regression
 |  |  |
 |---|---|
 | **Scenarios** | 5 — prompt injection · data poisoning · excessive agency · system-prompt leakage · unsafe output |
-| **Coverage** | 5 POC+control scenarios across **7/10** OWASP LLM risks (5 primary + 2 impact) · OWASP Agentic scheme (T1/T2/T3/T6 mapped) · MITRE ATLAS · NIST AI RMF |
+| **Coverage** | 5 POC+control scenarios across **7/10** OWASP LLM risks (5 primary + 2 impact) · both OWASP agentic schemes — Threats & Mitigations (T1/T2/T3/T6) **and** the 2026 Top 10 for Agentic Applications (ASI01/02/03/06/09) · MITRE ATLAS · NIST AI RMF |
 | **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean AIRQ heuristic **High → Medium** |
 | **Extras** | permission-checked tool loop · deterministic strategy-sweep attacker · md / json / **html** scorecard |
 | **Runs** | fully offline & deterministic — **no API key** · 39 tests green in CI (Python 3.11 / 3.12) |
@@ -80,18 +80,19 @@ Agentic AI Threats & Mitigations (T1–T15), MITRE ATLAS, and NIST AI RMF below.
 The point of the range: each POC must **land with controls off and fail with controls on.**
 Run `python -m finagent_redrange run` to regenerate `results/scorecard.{md,json,html}`.
 
-| Scenario | OWASP LLM | Agentic | ATLAS | AIRQ (off→on) | Controls **off** | Controls **on** | Validating control |
+| Scenario | OWASP LLM | Agentic (T&M · Top 10) | ATLAS | AIRQ (off→on) | Controls **off** | Controls **on** | Validating control |
 |---|---|---|---|---|---|---|---|
-| Indirect prompt injection (cross-account PII) | LLM01 · LLM02 | T6 | AML.T0051.001 | High → Medium | 🔴 exploited | 🟢 blocked | Output PII filter (+ provenance) |
-| Data poisoning (fabricated policy) | LLM04 · LLM09 | T1 | AML.T0070 | High → Medium | 🔴 exploited | 🟢 blocked | Source allowlist + integrity hash |
-| Excessive agency (autonomous transfer) | LLM06 · LLM01 | T2 · T3 | AML.T0053 | High → Medium | 🔴 exploited | 🟢 blocked | Action-authorization guardrail |
+| Indirect prompt injection (cross-account PII) | LLM01 · LLM02 | T6 · ASI01 | AML.T0051.001 | High → Medium | 🔴 exploited | 🟢 blocked | Output PII filter (+ provenance) |
+| Data poisoning (fabricated policy) | LLM04 · LLM09 | T1 · ASI06 | AML.T0070 | High → Medium | 🔴 exploited | 🟢 blocked | Source allowlist + integrity hash |
+| Excessive agency (autonomous transfer) | LLM06 · LLM01 | T2 · T3 · ASI02 · ASI03 | AML.T0053 | High → Medium | 🔴 exploited | 🟢 blocked | Action-authorization guardrail |
 | System-prompt leakage | LLM07 · LLM01 | — | AML.T0056 | Medium → Low | 🔴 exploited | 🟢 blocked | Output system-prompt-leak detector |
-| Unsafe output handling (malicious link) | LLM05 · LLM02 | — | AML.T0052.000 | Medium → Low | 🔴 exploited | 🟢 blocked | Output link/markup sanitiser |
+| Unsafe output handling (malicious link) | LLM05 · LLM02 | ASI09 | AML.T0052.000 | Medium → Low | 🔴 exploited | 🟢 blocked | Output link/markup sanitiser |
 
 *Regenerated on each run. The five scenarios are dedicated POC+control pairs for five **primary**
 OWASP risks (LLM01/04/05/06/07), mapped across **7 of 10** once impact tags (LLM02, LLM09) are
-counted. Agentic codes use OWASP "Agentic AI — Threats and Mitigations" (T1–T15); a cell is
-**blank** where no honest mapping exists. **AIRQ** (a heuristic defined for this project, not an external standard; AS = Attack Surface,
+counted. The Agentic column carries both OWASP agentic schemes — the "Agentic AI — Threats and
+Mitigations" taxonomy (T1–T15) and the 2026 "Top 10 for Agentic Applications" (ASI01–ASI10);
+a cell is **blank** where no honest mapping exists in either. **AIRQ** (a heuristic defined for this project, not an external standard; AS = Attack Surface,
 BR = Blast Radius, DC = Defense Controls) is an **illustrative analyst heuristic for
 prioritization, not a calibrated metric** — the controls-on DC is the control's *asserted* strength, so "High → Medium"
 is the intended mitigation effect, not a measured residual-risk number. ATLAS rows are

@@ -131,7 +131,10 @@ class FrameworkMapping:
     """How a finding maps to the standards risk/engineering teams already use."""
 
     owasp_llm: list[str] = field(default_factory=list)  # e.g. ["LLM01"]
-    owasp_agentic: list[str] = field(default_factory=list)  # OWASP Agentic T-code, e.g. ["T2"]
+    owasp_agentic: list[str] = field(default_factory=list)  # OWASP Agentic T&M T-code, e.g. ["T2"]
+    owasp_agentic_top10: list[str] = field(  # OWASP Agentic Top 10 (2026), e.g. ["ASI02"]
+        default_factory=list
+    )
     mitre_atlas: list[str] = field(default_factory=list)  # e.g. ["AML.T0051"]
     nist_ai_rmf: list[str] = field(default_factory=list)  # e.g. ["MEASURE 2.7"]
 

@@ -50,6 +50,10 @@ class ExcessiveAgencyScenario(Scenario):
 
     owasp_llm = ["LLM06", "LLM01"]  # excessive agency; triggered by prompt injection
     owasp_agentic = ["T2", "T3"]  # Tool Misuse; Privilege Compromise
+    owasp_agentic_top10 = [
+        "ASI02",
+        "ASI03",
+    ]  # Tool Misuse & Exploitation; Identity & Privilege Abuse
     # AML.T0053 (AI Agent Tool Invocation) is the direct fit — a coerced agent invokes a tool it
     # legitimately holds; the agentic T2/T3 codes add the tool-misuse/privilege framing.
     # AML.T0048.000 = External Harms: Financial Harm (money is moved).

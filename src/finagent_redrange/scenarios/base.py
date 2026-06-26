@@ -46,7 +46,8 @@ class Scenario(ABC):
 
     # Framework mapping is data, not behaviour — supplied as attributes the scorer reads.
     owasp_llm: list[str] = []
-    owasp_agentic: list[str] = []
+    owasp_agentic: list[str] = []  # OWASP Agentic "Threats & Mitigations" T-codes (T1–T15)
+    owasp_agentic_top10: list[str] = []  # OWASP Top 10 for Agentic Applications 2026 (ASI01–ASI10)
     mitre_atlas: list[str] = []
     nist_ai_rmf: list[str] = []
 

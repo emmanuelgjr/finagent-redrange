@@ -66,6 +66,7 @@ class IndirectPromptInjectionScenario(Scenario):
 
     owasp_llm = ["LLM01", "LLM02"]  # vector: prompt injection; impact: sensitive-info disclosure
     owasp_agentic = ["T6"]  # Intent Breaking & Goal Manipulation
+    owasp_agentic_top10 = ["ASI01"]  # Agent Goal Hijack (the injected instruction redirects intent)
     mitre_atlas = ["AML.T0051.001", "AML.T0057"]  # Indirect prompt injection; LLM data leakage
     nist_ai_rmf = ["MEASURE 2.7"]
 

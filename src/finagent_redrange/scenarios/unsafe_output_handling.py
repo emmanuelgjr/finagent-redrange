@@ -54,6 +54,7 @@ class UnsafeOutputHandlingScenario(Scenario):
 
     owasp_llm = ["LLM05", "LLM02"]  # improper output handling; exfiltration impact
     owasp_agentic: list[str] = []  # output-rendering is not an agentic-behaviour threat
+    owasp_agentic_top10 = ["ASI09"]  # Human-Agent Trust Exploitation (agent relays a phishing link)
     mitre_atlas = ["AML.T0052.000", "AML.T0051.001"]  # spearphishing via LLM; indirect injection
     nist_ai_rmf = ["MEASURE 2.7"]
 
