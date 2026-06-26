@@ -1,0 +1,39 @@
+Documentation & Research License — Creative Commons Attribution 4.0 International
+(CC BY 4.0)
+SPDX-License-Identifier: CC-BY-4.0
+
+Copyright 2026 Emmanuel Guilherme Junior
+
+The written and research materials in this repository — everything in the docs/
+directory (including the whitepaper outline, the engineering recommendations, and
+the real-model methodology note), the README and SECURITY documents, and the
+generated scorecards (results/) — are licensed under the Creative Commons
+Attribution 4.0 International license.
+
+  You are free to:
+    - Share — copy and redistribute the material in any medium or format
+    - Adapt — remix, transform, and build upon the material for any purpose,
+      even commercially
+
+  Under the following term:
+    - Attribution — You must give appropriate credit to Emmanuel Guilherme Junior,
+      provide a link to this repository and to the license, and indicate if
+      changes were made. You may do so in any reasonable manner, but not in any
+      way that suggests the licensor endorses you or your use.
+
+  No additional restrictions — You may not apply legal terms or technological
+  measures that legally restrict others from doing anything the license permits.
+
+This is a human-readable summary of (and not a substitute for) the license. The
+full legal code is available at:
+
+    https://creativecommons.org/licenses/by/4.0/legalcode
+
+How to attribute:
+
+    "FinAgent-RedRange" by Emmanuel Guilherme Junior, licensed under CC BY 4.0.
+    Source: https://github.com/emmanuelgjr/finagent-redrange
+
+NOTE ON SCOPE: This license applies to the documentation and research prose only.
+The software source code in this repository is licensed separately under the
+Apache License, Version 2.0 (see LICENSE and NOTICE).

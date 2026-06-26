@@ -1,0 +1,17 @@
+FinAgent-RedRange
+Copyright 2026 Emmanuel Guilherme Junior
+
+This product includes software and documentation created by
+Emmanuel Guilherme Junior — https://github.com/emmanuelgjr/finagent-redrange
+
+Licensing (dual):
+  - Source code is licensed under the Apache License, Version 2.0 (see LICENSE).
+  - Documentation and written research materials (the docs/ directory and other
+    prose content such as README.md and SECURITY.md, plus the generated scorecards)
+    are licensed under the Creative Commons Attribution 4.0 International license
+    (CC BY 4.0); see LICENSE-docs.
+
+Attribution is required. If you reuse this work, its harness, its framework
+crosswalk, or its findings, retain this notice and cite the project as described
+in CITATION.cff. This NOTICE file must be propagated with redistributions per
+section 4(d) of the Apache License.

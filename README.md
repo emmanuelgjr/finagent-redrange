@@ -9,7 +9,8 @@
 &nbsp;![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 &nbsp;![Lint](https://img.shields.io/badge/lint-ruff-261230?logo=ruff&logoColor=white)
 &nbsp;![Types](https://img.shields.io/badge/types-mypy-2A6DB2)
-&nbsp;![License](https://img.shields.io/badge/license-MIT-success)
+&nbsp;![Code license](https://img.shields.io/badge/code-Apache--2.0-success)
+&nbsp;![Docs license](https://img.shields.io/badge/docs-CC--BY--4.0-success)
 
 Develop proof-of-concept exploits against a mock retail-banking agent, then **prove that
 specific guardrails close each one** — end to end, from POC through regression test.
@@ -168,6 +169,16 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
 - ~~CI regression gate~~ ✅ shipped (ruff + mypy + pytest on Python 3.11/3.12).
 - Seed the attacker from a curated real-world incident corpus (`SeedLibrary.from_incident_db`).
 
-## License
+## License & citation
 
-MIT — see [LICENSE](LICENSE). (Switch to Apache-2.0 if you want the explicit patent grant.)
+Dual-licensed so the work stays usable while attribution stays required:
+
+- **Code** — [Apache License 2.0](LICENSE): permissive, with an explicit patent grant and
+  attribution propagation via the [NOTICE](NOTICE) file.
+- **Documentation & research** (the `docs/` directory, this README, and the generated
+  scorecards) — [Creative Commons Attribution 4.0](LICENSE-docs) (CC BY 4.0): reuse freely,
+  but credit the author by name and link back.
+
+If you use this project, its harness, its framework crosswalk, or its findings, please cite it —
+see [CITATION.cff](CITATION.cff) (GitHub's **"Cite this repository"** button). © 2026 Emmanuel
+Guilherme Junior.

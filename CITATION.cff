@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, its harness, its framework crosswalk, or its findings, please cite it as below."
+title: "FinAgent-RedRange: a reproducible, defensive red-team range for financial-services AI agents"
+abstract: >-
+  A self-contained sandbox for defensive AI-security research. It develops
+  proof-of-concept exploits against a mock financial-services AI agent and
+  validates that specific guardrails close each one end to end — from POC
+  through regression test — with every finding mapped to OWASP, MITRE ATLAS,
+  and NIST AI RMF.
+type: software
+authors:
+  - given-names: Emmanuel
+    family-names: Guilherme Junior
+repository-code: "https://github.com/emmanuelgjr/finagent-redrange"
+url: "https://github.com/emmanuelgjr/finagent-redrange"
+version: "0.2.2"
+date-released: "2026-06-26"
+license: Apache-2.0
+keywords:
+  - ai-security
+  - llm-security
+  - red-team
+  - agentic-ai
+  - owasp
+  - mitre-atlas
+  - nist-ai-rmf
