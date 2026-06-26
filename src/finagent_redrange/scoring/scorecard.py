@@ -203,9 +203,10 @@ def render_markdown(
         "- **AIRQ is an illustrative analyst heuristic** (1-10 anchored sub-scores) for ordering "
         "work, not a calibrated metric; the controls-on DC is the control's *asserted* strength, "
         "so High→Medium shows the intended mitigation effect, not a measured residual-risk number.",
-        "- **ATLAS mappings are closest-fit:** AML.T0053 (excessive agency) approximates own-tool "
-        "misuse — the agentic T2/T3 codes capture it more precisely; AML.T0020 (data poisoning) "
-        "is the stable id, RAG Poisoning AML.T0070 is the newer fit.",
+        "- **ATLAS mappings:** data poisoning uses AML.T0070 (RAG Poisoning) for the runtime "
+        "retrieval-corpus attack, with AML.T0020 (Poison Training Data) as its training-time "
+        "relative; excessive agency uses AML.T0053 (AI Agent Tool Invocation), with the agentic "
+        "T2/T3 codes adding tool-misuse / privilege context.",
         "- A blank **Agentic** cell means no honest OWASP Agentic (T1-T15) mapping exists for that "
         "scenario, rather than a forced one.",
     ]

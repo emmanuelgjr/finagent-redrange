@@ -7,7 +7,7 @@ craft better attacks. The system prompt embeds a canary token (it exists nowhere
 any leak is unambiguous.
 
 Maps to OWASP LLM07 (System Prompt Leakage) + LLM01 (the injection method), MITRE ATLAS
-AML.T0056 (LLM Meta Prompt Extraction) + AML.T0051 (prompt injection). No clean OWASP Agentic
+AML.T0056 (Extract LLM System Prompt) + AML.T0051 (prompt injection). No clean OWASP Agentic
 mapping exists for prompt extraction, so that field is intentionally left blank.
 
 Validating control: an output guardrail that detects system-prompt content (canary or a
@@ -45,7 +45,7 @@ class SystemPromptLeakageScenario(Scenario):
 
     owasp_llm = ["LLM07", "LLM01"]  # system prompt leakage; via prompt injection
     owasp_agentic: list[str] = []  # no honest agentic-threat mapping for prompt extraction
-    mitre_atlas = ["AML.T0056", "AML.T0051"]  # LLM Meta Prompt Extraction; LLM Prompt Injection
+    mitre_atlas = ["AML.T0056", "AML.T0051"]  # Extract LLM System Prompt; LLM Prompt Injection
     nist_ai_rmf = ["MEASURE 2.7"]
 
     attack_surface = 7

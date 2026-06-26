@@ -22,5 +22,12 @@ disclosure with the affected vendor.
 ## Reporting
 
 If you find an issue in this project (e.g. a scenario whose oracle is unsound, or a leak of
-non-synthetic data), open an issue or contact the maintainer. Please don't include real
-personal or account data in reports.
+non-synthetic data):
+
+- For non-sensitive issues, open a GitHub issue.
+- For anything security-sensitive, use **GitHub's private vulnerability reporting** on this
+  repository (Security ▸ *Report a vulnerability*) so the report stays private until it's
+  resolved, rather than opening a public issue.
+
+Please don't include real personal or account data in reports — this project only ever uses
+synthetic data, and reports about it should too.

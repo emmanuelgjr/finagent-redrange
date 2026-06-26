@@ -3,8 +3,8 @@
 Target length: 8–12 pages. Audience: AI security engineers and security leadership at a bank.
 Purpose: frame the repo as research, not just code. Pairs with the FinAgent-RedRange scorecard.
 
-This plays to your strength (you are a published OWASP author) while the repo answers the
-JD's coding/POC must-have. Together they cover nearly the whole job description.
+The paper frames the range as research; the repo is the reproducible artifact behind it. The
+two are meant to be read together — the scorecard supplies every number the paper cites.
 
 ---
 
@@ -21,9 +21,9 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
 - The assurance gap: continuous model/prompt change vs point-in-time testing.
 
 ## 3. Threat model (1–2 pages)
-- The reference agent: a plan→act→observe tool loop over permission-checked tools (balance,
-  transfer, KYC, ticket, support) + RAG + toggleable guardrails (input / retrieval / action /
-  output).
+- The reference agent: a plan→act→observe tool loop over five permission-checked tools
+  (balance, transfer, KYC, list-transactions, support ticket) + RAG + toggleable guardrails
+  (input / retrieval / action / output).
 - Attack surfaces (implemented): indirect prompt injection, data poisoning, excessive agency,
   system-prompt leakage, unsafe output handling; (roadmap) model theft, supply chain. Diagram
   (reuse the README Mermaid).
@@ -44,21 +44,23 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
 
 ## 5. Case study 1 — Indirect prompt injection → cross-account disclosure (1 page)
 - The poisoned-retrieval setup; the innocent user query; the leak.
-- Mapping: LLM01 / Agentic T6 / AML.T0051.
+- Mapping: LLM01·LLM02 / Agentic T6 / AML.T0051.001 (+ AML.T0057).
 - The control (output PII filter + retrieval provenance) and the before/after scorecard rows.
 
 ## 6. Case study 2 — Data poisoning → fabricated transfer policy (1 page)
 - Corrupting trusted knowledge; the agent confidently states false policy.
-- Mapping: LLM04 / Agentic T1 / AML.T0020.
+- Mapping: LLM04·LLM09 / Agentic T1 / AML.T0070 (RAG Poisoning; AML.T0020 training-time rel.).
 - The control (source allowlist + integrity hash) and before/after rows.
 
 ## 6b. Case studies 3–5 (brief, ~½ page each)
-- **Excessive agency → autonomous high-value transfer.** LLM06 / Agentic T2·T3 / AML.T0053.
-  Control: action-authorization guardrail (human-in-the-loop for high-risk tool calls).
-- **System-prompt leakage → hidden instructions disclosed.** LLM07 / AML.T0056. Control:
-  output system-prompt-leak detector (canary token + verbatim-span block).
-- **Unsafe output handling → malicious link relayed.** LLM05 / AML.T0052.000. Control: output
-  link/markup sanitiser (domain allowlist).
+- **Excessive agency → autonomous high-value transfer.** LLM06·LLM01 / Agentic T2·T3 /
+  AML.T0053 (AI Agent Tool Invocation) + AML.T0048.000. Control: action-authorization guardrail
+  (human-in-the-loop for high-risk tool calls).
+- **System-prompt leakage → hidden instructions disclosed.** LLM07·LLM01 / AML.T0056 (Extract
+  LLM System Prompt). Control: output system-prompt-leak detector (canary token + verbatim-span
+  block).
+- **Unsafe output handling → malicious link relayed.** LLM05·LLM02 / AML.T0052.000. Control:
+  output link/markup sanitiser (domain allowlist).
 
 ## 7. Results (1 page)
 - The scorecard: every scenario exploited with controls off, blocked with controls on.
@@ -75,12 +77,12 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
   the most critical threats first" part of the role).
 
 ## 10. References
-- OWASP GenAI Security Project (LLM Top 10, Agentic Top 10), MITRE ATLAS, NIST AI RMF.
-- Your own OWASP publications and incident dataset (cite them — they're differentiators).
+- OWASP GenAI Security Project (LLM Top 10, Agentic AI Threats & Mitigations), MITRE ATLAS, NIST AI RMF.
+- Relevant OWASP publications and incident datasets, cited where they inform the mappings.
 
 ---
 
 ### Notes
 - Keep all numbers from real runs, not asserted — the credibility is in reproducibility.
-- One tight blog-length version (~1,500 words) makes a good LinkedIn post to accompany the
-  repo; the full paper is the portfolio/interview artifact.
+- A tight blog-length version (~1,500 words) works as a companion post to the repo; the full
+  paper is the long-form writeup.

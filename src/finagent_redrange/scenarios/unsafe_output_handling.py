@@ -13,6 +13,10 @@ the closest honest fits. No clean OWASP Agentic mapping, so that field is left b
 Validating control: an output sanitiser that neutralises links/markup to any domain not on
 the bank's allowlist. With it ON, the malicious domain never reaches the user and the oracle
 returns False.
+
+Honesty note: under the offline EchoClient the controls-OFF leak is the echoed retrieved
+markup (a realistic pass-through threat — a model relaying a help-center link). The named
+link sanitiser is verifiably the *sole* control that flips this oracle with controls ON.
 """
 
 from __future__ import annotations

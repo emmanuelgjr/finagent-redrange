@@ -50,9 +50,9 @@ class ExcessiveAgencyScenario(Scenario):
 
     owasp_llm = ["LLM06", "LLM01"]  # excessive agency; triggered by prompt injection
     owasp_agentic = ["T2", "T3"]  # Tool Misuse; Privilege Compromise
-    # AML.T0053 (LLM Plugin Compromise) is ATLAS's closest tool-abuse technique; here the agent
-    # misuses its OWN legitimate tool rather than a compromised plugin, so it is an approximation
-    # — the agentic T2/T3 codes capture it more precisely. AML.T0048.000 = Financial Harm.
+    # AML.T0053 (AI Agent Tool Invocation) is the direct fit — a coerced agent invokes a tool it
+    # legitimately holds; the agentic T2/T3 codes add the tool-misuse/privilege framing.
+    # AML.T0048.000 = External Harms: Financial Harm (money is moved).
     mitre_atlas = ["AML.T0053", "AML.T0048.000"]
     nist_ai_rmf = ["MEASURE 2.7"]
 

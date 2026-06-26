@@ -36,14 +36,16 @@ REFERENCE: dict[str, str] = {
     "T2": "Agentic — Tool Misuse",
     "T3": "Agentic — Privilege Compromise",
     "T6": "Agentic — Intent Breaking & Goal Manipulation",
-    # MITRE ATLAS techniques / sub-techniques (canonical names).
+    # MITRE ATLAS techniques / sub-techniques (canonical names, verified June 2026 against the
+    # live atlas.mitre.org matrix / mitre-atlas/atlas-data).
     "AML.T0051": "ATLAS — LLM Prompt Injection",
     "AML.T0051.001": "ATLAS — LLM Prompt Injection: Indirect",
-    "AML.T0020": "ATLAS — Poison Training Data",  # stable ID; T0070 RAG Poisoning is newer
+    "AML.T0070": "ATLAS — RAG Poisoning",  # runtime RAG-corpus poisoning (the data-poisoning fit)
+    "AML.T0020": "ATLAS — Poison Training Data",  # training-time relative of RAG Poisoning
     "AML.T0048.000": "ATLAS — External Harms: Financial Harm",
     "AML.T0052.000": "ATLAS — Phishing: Spearphishing via Social Engineering LLM",
-    "AML.T0053": "ATLAS — LLM Plugin Compromise",
-    "AML.T0056": "ATLAS — LLM Meta Prompt Extraction",
+    "AML.T0053": "ATLAS — AI Agent Tool Invocation",
+    "AML.T0056": "ATLAS — Extract LLM System Prompt",
     "AML.T0057": "ATLAS — LLM Data Leakage",
     # NIST AI Risk Management Framework (AI RMF 1.0 / NIST AI 100-1) subcategories.
     "MEASURE 2.5": "NIST AI RMF — AI system demonstrated to be valid and reliable",
