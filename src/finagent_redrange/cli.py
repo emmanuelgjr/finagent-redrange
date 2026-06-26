@@ -169,7 +169,12 @@ def main() -> None:
     a.add_argument("--model", default="echo", help="echo (offline) | claude")
     a.set_defaults(func=run_auto)
     args = p.parse_args()
-    args.func(args)
+    try:
+        args.func(args)
+    except RuntimeError as exc:
+        # Surface expected configuration errors (e.g. a missing ANTHROPIC_API_KEY on a
+        # `--model claude` run) as a clean one-line message instead of a traceback.
+        raise SystemExit(f"error: {exc}") from None
 
 
 if __name__ == "__main__":

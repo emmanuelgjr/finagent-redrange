@@ -1,3 +1,3 @@
 """FinAgent-RedRange: a defensive red-team range for financial-services AI agents."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.2"

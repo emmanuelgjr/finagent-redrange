@@ -144,6 +144,10 @@ class BankingAgent:
                 break
             # Record the assistant turn that *requested* the tools, so a real provider sees a
             # valid assistant(tool_use) -> user(tool_result) sequence on the next step.
+            # NOTE: this is a model-internal turn — it is NOT passed through check_output (only
+            # the final `draft` is, above), so it is not user-facing. A future scenario that
+            # pairs a tool call with a text leak in the same response must base its oracle on the
+            # final guardrailed answer, not this intermediate turn, to stay sound.
             self.transcript.add(Role.ASSISTANT, resp.text, tool_calls=resp.tool_calls)
             for call in resp.tool_calls:
                 # Action-authorization guardrail: gate high-risk tool use *before* the

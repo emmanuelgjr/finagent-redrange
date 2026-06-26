@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege: CI only reads the repo (no writes, no token use).
+permissions:
+  contents: read
+
 jobs:
   test:
     name: lint, type-check & regression suite

@@ -1,0 +1,14 @@
+# Dependabot keeps the (small) dependency surface and the CI actions current.
+# Defensive-research repo: low-volume, weekly, to surface known-vulnerable deps early.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

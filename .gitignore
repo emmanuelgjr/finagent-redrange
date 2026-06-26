@@ -16,3 +16,7 @@ dist/
 results/*.md
 results/*.json
 results/*.html
+
+# local-only working docs — kept on disk, deliberately not part of the public repo
+/run.md
+/docs/DEMO.md

@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/emmanuelgjr/finagent-redrange/actions/workflows/ci.yml/badge.svg)](https://github.com/emmanuelgjr/finagent-redrange/actions/workflows/ci.yml)
 &nbsp;![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
-&nbsp;![Tests](https://img.shields.io/badge/tests-38%20passing-brightgreen)
+&nbsp;![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 &nbsp;![Lint](https://img.shields.io/badge/lint-ruff-261230?logo=ruff&logoColor=white)
 &nbsp;![Types](https://img.shields.io/badge/types-mypy-2A6DB2)
 &nbsp;![License](https://img.shields.io/badge/license-MIT-success)
@@ -108,7 +108,7 @@ sweeps every strategy it has.*
 
 ```bash
 git clone https://github.com/emmanuelgjr/finagent-redrange.git && cd finagent-redrange
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate   # Windows (PowerShell): .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
 
 # offline, deterministic (no API key needed) — uses the EchoClient
@@ -116,7 +116,8 @@ python -m finagent_redrange run        # all 5 scenarios, controls off then on -
 python -m finagent_redrange auto       # turn the autonomous attacker loose on an objective
 
 # against a real model (full tool-execution loop with permission-checked tools)
-cp .env.example .env   # add ANTHROPIC_API_KEY
+cp .env.example .env             # add ANTHROPIC_API_KEY
+pip install -e ".[anthropic]"    # real-model runs also need the Anthropic SDK
 python -m finagent_redrange run --model claude --controls off
 python -m finagent_redrange run --model claude --controls on   # mitigations enabled
 
@@ -147,7 +148,7 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
   sub-scores as structured fields, so they drop straight into governance and audit workflows.
 - **Black/grey-box discipline.** The attacker only touches the agent's public `respond()`
   surface — the same position a real adversary occupies.
-- **Reproducible.** Pinned deps, one-command run, deterministic offline mode.
+- **Reproducible.** One-command run and a deterministic offline mode; CI exercises the suite on Python 3.11 / 3.12.
 - **Honest crosswalk, adversarially reviewed.** Framework IDs were verified against the
   published standards (e.g. OWASP LLM05 2025 = *Improper Output Handling*; agentic threats use
   the OWASP T1–T15 scheme), and a multi-agent adversarial review hardened the oracles so each
