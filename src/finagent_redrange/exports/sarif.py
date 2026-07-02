@@ -18,6 +18,7 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from finagent_redrange import __version__
 from finagent_redrange.scoring import frameworks
 from finagent_redrange.types import Severity
 
@@ -162,7 +163,7 @@ def to_sarif(findings: list[Finding]) -> dict[str, Any]:
             "driver": {
                 "name": "FinAgent-RedRange",
                 "informationUri": "https://github.com/emmanuelgjr/finagent-redrange",
-                "version": "0.3.0",
+                "version": __version__,
                 "rules": rules,
             }
         },
