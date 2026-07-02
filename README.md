@@ -30,7 +30,7 @@ specific guardrails close each one** — end to end, from POC through regression
 | **Coverage** | **10/10** OWASP LLM risks (8 dedicated POC+control scenarios + LLM02 & LLM09 as impact tags) · both OWASP agentic schemes — Threats & Mitigations (T1/T2/T3/T4/T6) **and** the 2026 Top 10 for Agentic Applications (ASI01–04, 06, 09) · MITRE ATLAS · NIST AI RMF |
 | **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean AIRQ heuristic **High → Medium** |
 | **Extras** | permission-checked tool loop · deterministic strategy-sweep attacker · semantic real-model oracle · md / json / **html** scorecard |
-| **Handouts** | ready-to-use exports for security teams — **Sigma** detection pack (measured precision) · **SARIF 2.1.0** findings · **GSN assurance case** · **regulatory crosswalk** (NIST/ISO 42001/EU AI Act). See [docs/HANDOUTS.md](docs/HANDOUTS.md) |
+| **Handouts** | ready-to-use exports for security teams — **Sigma** detection pack (measured precision) · **SARIF 2.1.0** findings · **GSN assurance case** · **regulatory crosswalk** (NIST/ISO 42001/EU AI Act) · **ATLAS Navigator** coverage layer. See [docs/HANDOUTS.md](docs/HANDOUTS.md) |
 | **Runs** | fully offline & deterministic — **no API key** · 75 tests green in CI (Python 3.11 / 3.12) |
 | **Try it** | `pip install -e ".[dev]" && python -m finagent_redrange run` |
 
@@ -140,8 +140,9 @@ Outputs land in `results/` as `scorecard.md` (the table above), `scorecard.json`
 (machine-readable, CI-friendly), and `scorecard.html` (a standalone styled report for
 screen-sharing). Adding `--handouts` also writes `results/sigma/` (Sigma detection rules + a
 labeled-replay precision report), `results/findings.sarif` (SARIF 2.1.0), `results/assurance/`
-(a GSN control-effectiveness assurance case), and `results/compliance/` (a regulatory control
-crosswalk to NIST AI RMF / ISO 42001 / EU AI Act). All are regenerated on each run; none are committed.
+(a GSN control-effectiveness assurance case), `results/compliance/` (a regulatory control
+crosswalk to NIST AI RMF / ISO 42001 / EU AI Act), and `results/navigator/` (a MITRE ATLAS Navigator
+coverage layer). All are regenerated on each run; none are committed.
 See **[docs/HANDOUTS.md](docs/HANDOUTS.md)** for what each is, what it provides per persona, and how
 its precision is validated.
 
@@ -153,7 +154,7 @@ its precision is validated.
 | `attacker/` | Red-team engine: scripted `run_campaign` + autonomous `run_autonomous` (composes seeds × transforms until an oracle fires) |
 | `scenarios/` | One attack class per file (8): indirect prompt injection, data poisoning, excessive agency, system-prompt leakage, unsafe output handling, vector/embedding weakness, unbounded consumption, supply chain — full OWASP LLM Top 10 coverage |
 | `scoring/` | Framework crosswalk (OWASP / ATLAS / NIST) + AIRQ risk scoring + scorecard renderer (md / json / html) |
-| `exports/` | Handout exporters generated from `Finding`s — **Sigma** detection pack + labeled-replay precision harness, **SARIF 2.1.0** findings, **GSN assurance case**, **regulatory crosswalk** (NIST/ISO 42001/EU AI Act) (see [docs/HANDOUTS.md](docs/HANDOUTS.md)) |
+| `exports/` | Handout exporters generated from `Finding`s — **Sigma** detection pack + labeled-replay precision harness, **SARIF 2.1.0** findings, **GSN assurance case**, **regulatory crosswalk** (NIST/ISO 42001/EU AI Act), **ATLAS Navigator** coverage layer (see [docs/HANDOUTS.md](docs/HANDOUTS.md)) |
 | `llm/` | Provider-agnostic client returning structured `ModelResponse` (text + tool calls); `EchoClient` runs offline for tests, `AnthropicClient` for real-model runs |
 
 Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.md).

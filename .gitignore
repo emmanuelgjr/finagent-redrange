@@ -20,6 +20,7 @@ results/*.sarif
 results/sigma/
 results/assurance/
 results/compliance/
+results/navigator/
 
 # local-only interview / prep doc (not part of the public repo)
 /interviewRBC.docx

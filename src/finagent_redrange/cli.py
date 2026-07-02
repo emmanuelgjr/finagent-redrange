@@ -111,7 +111,8 @@ def _write_handouts(args: argparse.Namespace, off: list[Finding], on: list[Findi
     want_sarif = args.sarif or args.handouts
     want_assurance = args.assurance or args.handouts
     want_compliance = args.compliance or args.handouts
-    if not (want_sigma or want_sarif or want_assurance or want_compliance):
+    want_navigator = args.navigator or args.handouts
+    if not (want_sigma or want_sarif or want_assurance or want_compliance or want_navigator):
         return
     if not (off and on):
         print("note: handout exports need both control passes — re-run with `--controls both`")
@@ -128,6 +129,9 @@ def _write_handouts(args: argparse.Namespace, off: list[Finding], on: list[Findi
     if want_compliance:
         exports.write_compliance(off, on, RESULTS_DIR)
         print(f"Wrote {RESULTS_DIR / 'compliance'} (regulatory control crosswalk)")
+    if want_navigator:
+        exports.write_navigator(off, on, RESULTS_DIR)
+        print(f"Wrote {RESULTS_DIR / 'navigator'} (MITRE ATLAS Navigator coverage layer)")
 
 
 def run(args: argparse.Namespace) -> None:
@@ -223,9 +227,14 @@ def main() -> None:
         help="also export a NIST/ISO 42001/EU AI Act control crosswalk to results/compliance/",
     )
     r.add_argument(
+        "--navigator",
+        action="store_true",
+        help="also export a MITRE ATLAS Navigator coverage layer to results/navigator/",
+    )
+    r.add_argument(
         "--handouts",
         action="store_true",
-        help="shortcut: export all handout artifacts (sigma + sarif + assurance + compliance)",
+        help="shortcut: export all handout artifacts (sigma/sarif/assurance/compliance/navigator)",
     )
     r.set_defaults(func=run)
     a = sub.add_parser("auto", help="run the autonomous attacker against an objective")

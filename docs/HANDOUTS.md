@@ -19,6 +19,7 @@ python -m finagent_redrange run --sigma
 python -m finagent_redrange run --sarif
 python -m finagent_redrange run --assurance
 python -m finagent_redrange run --compliance
+python -m finagent_redrange run --navigator
 ```
 
 ---
@@ -157,6 +158,32 @@ It also asserts the artifact carries its disclaimer and the correct EU AI Act ti
 > Act timeline is carried in the artifact: GPAI provider obligations have applied **since 2 Aug
 > 2025**; enforcement/penalties and most high-risk obligations apply **from 2 Aug 2026**. Verify
 > against the current published standard text before use.
+
+---
+
+## 5. MITRE ATLAS Navigator coverage layer — coverage visualization
+
+**Output:** `results/navigator/atlas-coverage.json`.
+
+### What it is
+A MITRE ATT&CK-Navigator layer file that heat-maps the ATLAS techniques the range exercises (scored
+by how many scenarios touch each technique, with the exercising scenarios in each technique comment).
+
+### What it provides
+A one-glance coverage picture for a review board or a threat-informed-defense discussion — "here are
+the ATLAS techniques this range demonstrates, and how often." Loads directly in the **MITRE ATLAS
+Navigator** (https://mitre-atlas.github.io/atlas-navigator/).
+
+### How it validates (precision)
+`tests/test_export_navigator.py` asserts it is a valid **ATLAS-domain** layer — `domain: "atlas-atlas"`,
+`versions: {"layer":"4.3","navigator":"4.6.4"}`, no `attack` key (verified against the official
+`mitre-atlas/atlas-navigator-data` output) — and that every technique in it is a real ATLAS id from
+the verified crosswalk that the range actually exercises (completeness + provenance), with scores
+matching scenario counts. Output is deterministic.
+
+> **Load it in the ATLAS Navigator, not the enterprise one.** ATLAS `AML.T####` ids are invalid in
+> the standard enterprise / mobile / ics ATT&CK Navigator domains and will not render there. This is a
+> coverage view of what the range demonstrates, not a claim of exhaustive ATLAS coverage.
 
 ---
 
