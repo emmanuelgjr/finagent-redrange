@@ -17,7 +17,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from finagent_redrange import exports
-from finagent_redrange.attacker.engine import AutonomousReport, run_autonomous, run_campaign
+from finagent_redrange.attacker.engine import (
+    AutonomousReport,
+    LLMPlanner,
+    SweepPlanner,
+    run_autonomous,
+    run_campaign,
+)
 from finagent_redrange.attacker.seeds import SeedLibrary
 from finagent_redrange.llm.client import get_client
 from finagent_redrange.scenarios.data_poisoning import DataPoisoningScenario
@@ -35,6 +41,7 @@ from finagent_redrange.target.tools import Session, ToolRegistry
 from finagent_redrange.types import SYSTEM_PROMPT_CANARY, Transcript
 
 if TYPE_CHECKING:
+    from finagent_redrange.attacker.engine import Planner
     from finagent_redrange.scenarios.base import Scenario
     from finagent_redrange.types import Finding
 
@@ -83,8 +90,19 @@ def _system_prompt_leaked(agent: BankingAgent, transcript: Transcript) -> bool:
     return SYSTEM_PROMPT_CANARY in transcript.assistant_text()
 
 
-def autonomous_reports(model: str) -> list[AutonomousReport]:
-    """Run the autonomous attacker against the demo objective, controls off then on."""
+def _make_planner(kind: str, model: str) -> Planner:
+    """sweep = deterministic, offline (the scorecard/CI default); llm = adaptive LLM planner."""
+    if kind == "llm":
+        return LLMPlanner(get_client(model))
+    return SweepPlanner()
+
+
+def autonomous_reports(model: str, planner_kind: str = "sweep") -> list[AutonomousReport]:
+    """Run the autonomous attacker against the demo objective, controls off then on.
+
+    ``planner_kind="sweep"`` is the deterministic, offline default (used by the scorecard); "llm"
+    selects the adaptive LLM planner — a real-model feature, pair it with ``--model claude``.
+    """
     seeds = SeedLibrary.from_yaml(DATA_SEEDS).by_technique("system_prompt_leakage")
     reports = []
     for controls_on in (False, True):
@@ -94,6 +112,7 @@ def autonomous_reports(model: str) -> list[AutonomousReport]:
                 AUTONOMOUS_OBJECTIVE,
                 _system_prompt_leaked,
                 seeds,
+                planner=_make_planner(planner_kind, model),
                 guardrails_enabled=controls_on,
             )
         )
@@ -156,8 +175,8 @@ def run(args: argparse.Namespace) -> None:
 
 
 def run_auto(args: argparse.Namespace) -> None:
-    print(f"Autonomous attacker — objective: {AUTONOMOUS_OBJECTIVE}\n")
-    for report in autonomous_reports(args.model):
+    print(f"Autonomous attacker — objective: {AUTONOMOUS_OBJECTIVE} (planner: {args.planner})\n")
+    for report in autonomous_reports(args.model, args.planner):
         state = "controls-on " if report.guardrails_enabled else "controls-off"
         if report.succeeded:
             verdict = (
@@ -239,6 +258,12 @@ def main() -> None:
     r.set_defaults(func=run)
     a = sub.add_parser("auto", help="run the autonomous attacker against an objective")
     a.add_argument("--model", default="echo", help="echo (offline) | claude")
+    a.add_argument(
+        "--planner",
+        default="sweep",
+        choices=["sweep", "llm"],
+        help="sweep (deterministic, offline) | llm (adaptive LLM planner, needs --model claude)",
+    )
     a.set_defaults(func=run_auto)
     args = p.parse_args()
     try:

@@ -107,13 +107,15 @@ closest-fit (see the scorecard's Notes). Full matrix in `results/scorecard.md`.*
 ### Strategy-sweep attacker
 
 `python -m finagent_redrange auto` turns an attacker loose on an objective ("extract the agent's
-hidden system prompt"). It **sweeps** a fixed product of seed payloads × transforms (base64,
-role-play, crescendo) until an oracle fires — a deterministic fuzzing harness, *not* (yet) an
-adaptive/LLM-driven planner (that's the roadmap). With controls **off** it lands; with controls
-**on** it is defeated by layered defense — the base64-obfuscated probe slips past the input
-filter but the **output canary detector** catches the leak, and the direct phrasings are caught
-by the input filter. The headline defensive result: *the control holds even as the attacker
-sweeps every strategy it has.*
+hidden system prompt"). Two planners share one seam (`attacker/engine.py`): the default
+**`--planner sweep`** runs a deterministic fixed product of seed payloads × transforms (base64,
+role-play, crescendo) — offline and CI-friendly — while **`--planner llm`** (pair with
+`--model claude`) is an **adaptive LLM planner** that reasons about which seed + transform to try
+next given what's already been tried and whether it landed. With controls **off** it lands; with
+controls **on** it is defeated by layered defense — the base64-obfuscated probe slips past the
+input filter but the **output canary detector** catches the leak, and the direct phrasings are
+caught by the input filter. The headline defensive result: *the control holds even as the attacker
+works through every strategy it has.*
 
 ## Quickstart
 
@@ -175,9 +177,11 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
 
 ## Roadmap
 
-- ~~Autonomous attacker-agent loop~~ ✅ shipped (`attacker/run_autonomous`, deterministic
-  composer). Next: swap the deterministic planner for an **LLM-driven** one that reasons about
-  what to try next.
+- ~~Autonomous attacker-agent loop~~ ✅ shipped (`attacker/run_autonomous`).
+- ~~LLM-driven attacker planner~~ ✅ shipped — the planner is now a pluggable seam with two
+  implementations: the deterministic `SweepPlanner` (offline default) and an adaptive `LLMPlanner`
+  that reasons about the next seed + transform from the feedback of prior attempts
+  (`auto --planner llm --model claude`).
 - ~~Excessive agency, system-prompt leakage, unsafe output handling scenarios~~ ✅ shipped.
 - ~~Semantic oracles for real-model runs~~ ✅ shipped (`scenarios/judge.py`: an
   adoption-vs-refutation judge — deterministic offline, a semantic LLM judge on `--model claude`
@@ -191,8 +195,8 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
   **regulatory crosswalk** (NIST AI RMF + GenAI Profile, ISO/IEC 42001, EU AI Act) with
   declared-vs-interpretive provenance labeling (`exports/`, `run --handouts`). See
   [docs/HANDOUTS.md](docs/HANDOUTS.md).
-- Next: swap the deterministic strategy-sweep planner for an **LLM-driven** one; seed the attacker
-  from a curated real-world incident corpus (`SeedLibrary.from_incident_db`).
+- Next: seed the attacker from a curated real-world incident corpus
+  (`SeedLibrary.from_incident_db`); multimodal attack surfaces.
 
 ## License & citation
 
