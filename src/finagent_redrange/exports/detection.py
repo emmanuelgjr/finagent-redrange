@@ -105,9 +105,7 @@ class RuleScore:
         return round(self.tp / denom, 2) if denom else 0.0
 
 
-def confusion_matrix(
-    findings_off: list[Finding], findings_on: list[Finding]
-) -> list[RuleScore]:
+def confusion_matrix(findings_off: list[Finding], findings_on: list[Finding]) -> list[RuleScore]:
     """Replay every scenario's signature over every transcript in the corpus and score each rule.
 
     ``findings_off`` carry the detection signatures (via ``Finding.detection``) and the exploited

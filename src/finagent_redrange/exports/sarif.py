@@ -172,9 +172,7 @@ def to_sarif(findings: list[Finding]) -> dict[str, Any]:
     return {"$schema": _SCHEMA, "version": "2.1.0", "runs": [run]}
 
 
-def write_sarif(
-    findings_off: list[Finding], findings_on: list[Finding], out_dir: Path
-) -> None:
+def write_sarif(findings_off: list[Finding], findings_on: list[Finding], out_dir: Path) -> None:
     """Write the controls-off (exploited) findings as ``results/findings.sarif``.
 
     ``findings_on`` is accepted for a uniform exporter signature; SARIF results are the exploited

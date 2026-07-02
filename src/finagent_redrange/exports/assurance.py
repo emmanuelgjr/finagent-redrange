@@ -73,9 +73,7 @@ def _crosswalk_text(finding: Finding) -> str:
     return "; ".join(parts)
 
 
-def to_assurance_case(
-    findings_off: list[Finding], findings_on: list[Finding]
-) -> dict[str, Any]:
+def to_assurance_case(findings_off: list[Finding], findings_on: list[Finding]) -> dict[str, Any]:
     """Build the GSN assurance case from the paired controls-off / controls-on findings."""
     on_by_id = {f.scenario_id: f for f in findings_on}
     nodes: list[dict[str, Any]] = [
@@ -232,9 +230,7 @@ def to_dot(case: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def write_assurance(
-    findings_off: list[Finding], findings_on: list[Finding], out_dir: Path
-) -> None:
+def write_assurance(findings_off: list[Finding], findings_on: list[Finding], out_dir: Path) -> None:
     """Write the assurance case (JSON + DOT) and the per-transcript evidence files it hashes."""
     adir = out_dir / "assurance"
     (adir / "evidence").mkdir(parents=True, exist_ok=True)

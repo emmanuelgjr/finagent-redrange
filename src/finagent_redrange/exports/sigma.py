@@ -147,9 +147,7 @@ def render_precision_report(findings_off: list[Finding], findings_on: list[Findi
     return "\n".join(lines)
 
 
-def write_sigma(
-    findings_off: list[Finding], findings_on: list[Finding], out_dir: Path
-) -> None:
+def write_sigma(findings_off: list[Finding], findings_on: list[Finding], out_dir: Path) -> None:
     """Write one Sigma rule per scenario plus the labeled-replay precision report."""
     sigma_dir = out_dir / "sigma"
     sigma_dir.mkdir(parents=True, exist_ok=True)
