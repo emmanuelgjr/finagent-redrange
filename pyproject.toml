@@ -11,9 +11,27 @@ requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Emmanuel Guilherme Junior" }]
 keywords = ["ai-security", "llm-security", "red-team", "agentic-ai", "owasp", "mitre-atlas"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
 dependencies = [
     "pyyaml>=6.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/emmanuelgjr/finagent-redrange"
+Repository = "https://github.com/emmanuelgjr/finagent-redrange"
+Issues = "https://github.com/emmanuelgjr/finagent-redrange/issues"
 
 [project.optional-dependencies]
 dev = [

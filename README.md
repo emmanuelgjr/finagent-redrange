@@ -34,11 +34,11 @@ specific guardrails close each one** — end to end, from POC through regression
 | **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean AIRQ heuristic **High → Medium** |
 | **Extras** | permission-checked tool loop · deterministic strategy-sweep attacker · semantic real-model oracle · md / json / **html** scorecard |
 | **Handouts** | ready-to-use exports for security teams — **Sigma** detection pack (measured precision) · **SARIF 2.1.0** findings · **GSN assurance case** · **regulatory crosswalk** (NIST/ISO 42001/EU AI Act) · **ATLAS Navigator** coverage layer. See [docs/HANDOUTS.md](docs/HANDOUTS.md) |
-| **Runs** | fully offline & deterministic — **no API key** · 75 tests green in CI (Python 3.11 / 3.12) |
+| **Runs** | fully offline & deterministic — **no API key** · 88 tests green in CI (Python 3.11 / 3.12) |
 | **Try it** | `pip install -e ".[dev]" && python -m finagent_redrange run` |
 
 <p align="center">
-  <img src="docs/scorecard.png" alt="FinAgent-RedRange scorecard — five scenarios exploited with controls off and blocked with controls on, an OWASP coverage matrix, and the strategy-sweep attacker result" width="900">
+  <img src="docs/scorecard.png" alt="FinAgent-RedRange scorecard — eight scenarios exploited with controls off and blocked with controls on, OWASP LLM and Agentic coverage matrices, and the autonomous-attacker result" width="900">
   <br/>
   <em>The headline artifact: <code>python -m finagent_redrange run</code> regenerates this scorecard (md / json / html).</em>
 </p>
@@ -63,12 +63,15 @@ flowchart LR
     A -->|draft answer| GR_OUT[Output guardrails<br/>PII · leak · link filters]
     GR_OUT -->|final answer| U
 
-    %% attack surfaces
+    %% attack surfaces (the eight scenarios — full OWASP LLM Top 10)
     INJ([Indirect prompt injection]):::atk -.poisons.-> DOCS
     POI([Data poisoning]):::atk -.corrupts.-> DOCS
     AGY([Excessive agency]):::atk -.coerces.-> T
     LEAK([System-prompt leakage]):::atk -.extracts.-> A
     OUT([Unsafe output handling]):::atk -.rides out via.-> GR_OUT
+    VEC([Vector/embedding weakness]):::atk -.cross-tenant leak via.-> DOCS
+    CON([Unbounded consumption]):::atk -.floods.-> T
+    SUP([Supply chain]):::atk -.injects malicious tool into.-> T
 
     classDef atk fill:#fde,stroke:#c39,color:#000;
 ```
