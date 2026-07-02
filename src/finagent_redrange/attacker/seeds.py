@@ -15,6 +15,9 @@ from pathlib import Path
 
 import yaml
 
+#: Repo-root data directory holding the seed corpora (works in the editable install).
+_DATA_DIR = Path(__file__).resolve().parents[3] / "data"
+
 
 @dataclass
 class Seed:
@@ -22,6 +25,7 @@ class Seed:
     technique: str  # e.g. "indirect_prompt_injection"
     owasp: list[str]
     text: str  # the seed payload / instruction (targets the mock agent only)
+    source: str = ""  # provenance (e.g. the public incident/technique class it models)
 
 
 class SeedLibrary:
@@ -37,14 +41,19 @@ class SeedLibrary:
         return list(self._seeds)
 
     @classmethod
-    def from_incident_db(cls, **kwargs) -> SeedLibrary:
-        """Build seeds from an external incident dataset.
+    def from_incident_db(cls, path: Path | None = None) -> SeedLibrary:
+        """Build seeds from a curated incident corpus (``data/incidents.yaml`` by default).
 
-        TODO(you): adapt your incident records -> Seed objects here (map each incident's
-        technique + minimal repro to a Seed). This is the moat: the attacker is seeded by a
-        curated corpus of real GenAI/agentic incidents rather than a handful of demo prompts.
+        The bundled corpus is **public and category-level**: each seed models a publicly documented
+        technique class (OWASP LLM / MITRE ATLAS) and targets ONLY the bundled mock agent + its
+        synthetic accounts — it is *not* proprietary incident data. This is the moat hook: point
+        ``path`` at (or override this method to adapt) your own incident dataset so real-world
+        GenAI/agentic incidents become the attacker's knowledge base. The rest of the code depends
+        only on the ``Seed`` interface, so the source is swappable without touching the engine.
         """
-        raise NotImplementedError("wire your incident dataset adapter here")
+        src = path or (_DATA_DIR / "incidents.yaml")
+        raw = yaml.safe_load(src.read_text(encoding="utf-8")) or []
+        return cls([Seed(**s) for s in raw])
 
     def by_technique(self, technique: str) -> list[Seed]:
         return [s for s in self._seeds if s.technique == technique]
