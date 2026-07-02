@@ -110,7 +110,8 @@ def _write_handouts(args: argparse.Namespace, off: list[Finding], on: list[Findi
     want_sigma = args.sigma or args.handouts
     want_sarif = args.sarif or args.handouts
     want_assurance = args.assurance or args.handouts
-    if not (want_sigma or want_sarif or want_assurance):
+    want_compliance = args.compliance or args.handouts
+    if not (want_sigma or want_sarif or want_assurance or want_compliance):
         return
     if not (off and on):
         print("note: handout exports need both control passes — re-run with `--controls both`")
@@ -124,6 +125,9 @@ def _write_handouts(args: argparse.Namespace, off: list[Finding], on: list[Findi
     if want_assurance:
         exports.write_assurance(off, on, RESULTS_DIR)
         print(f"Wrote {RESULTS_DIR / 'assurance'} (GSN assurance case + evidence)")
+    if want_compliance:
+        exports.write_compliance(off, on, RESULTS_DIR)
+        print(f"Wrote {RESULTS_DIR / 'compliance'} (regulatory control crosswalk)")
 
 
 def run(args: argparse.Namespace) -> None:
@@ -214,9 +218,14 @@ def main() -> None:
         help="also export a GSN control-effectiveness assurance case to results/assurance/",
     )
     r.add_argument(
+        "--compliance",
+        action="store_true",
+        help="also export a NIST/ISO 42001/EU AI Act control crosswalk to results/compliance/",
+    )
+    r.add_argument(
         "--handouts",
         action="store_true",
-        help="shortcut: export all handout artifacts (sigma + sarif + assurance)",
+        help="shortcut: export all handout artifacts (sigma + sarif + assurance + compliance)",
     )
     r.set_defaults(func=run)
     a = sub.add_parser("auto", help="run the autonomous attacker against an objective")

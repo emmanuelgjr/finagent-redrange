@@ -19,6 +19,10 @@ results/*.html
 results/*.sarif
 results/sigma/
 results/assurance/
+results/compliance/
+
+# local-only interview / prep doc (not part of the public repo)
+/interviewRBC.docx
 
 # local-only working docs — kept on disk, deliberately not part of the public repo
 /run.md

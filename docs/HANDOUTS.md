@@ -13,11 +13,12 @@ be *measured*, not merely asserted.
 Generate them all:
 
 ```bash
-python -m finagent_redrange run --handouts     # sigma + sarif + assurance (needs both control passes)
+python -m finagent_redrange run --handouts     # sigma + sarif + assurance + compliance (needs both passes)
 # or individually:
 python -m finagent_redrange run --sigma
 python -m finagent_redrange run --sarif
 python -m finagent_redrange run --assurance
+python -m finagent_redrange run --compliance
 ```
 
 ---
@@ -125,6 +126,37 @@ evidence artifacts (not scanned source) — a documented adaptation importers ac
 integrity gate validates internal consistency/completeness, not accuracy against the external
 standard. `security-severity` is derived from the AIRQ heuristic, clamped to SARIF's required
 0.0–10.0 range and tagged as an illustrative, uncalibrated score — never a measured residual risk.
+
+---
+
+## 4. Regulatory control crosswalk — for AI Security Architects / GRC (financial services)
+
+**Output:** `results/compliance/crosswalk.json` (+ `crosswalk.md`).
+
+### What it is
+A control-mapping table that takes each validated control and maps it onto the frameworks a
+European FS risk/compliance function is asked about: **NIST AI RMF 1.0** and the **NIST AI 600-1
+Generative AI Profile**, **ISO/IEC 42001:2023** (Annex A control themes), and the **EU AI Act**
+(article references). It complements the assurance case — that argues effectiveness over the range's
+evidence; this maps the evidence onto the regulations a board or auditor cites.
+
+### What it provides
+A ready starting point for the "which regulations does each control touch?" question, generated from
+the range's own scenarios rather than assembled by hand — so it stays in sync as scenarios change.
+
+### How it validates (precision)
+Because a regulatory mapping is interpretive, the gate is honest about what it can prove
+(`tests/test_export_compliance.py`): **completeness** (no scenario is left unmapped) and
+**provenance labeling** — only the NIST AI RMF subcategories carried on the (verified) scenario
+crosswalk are marked `basis: declared`; every ISO 42001 / EU AI Act / GenAI-Profile row is marked
+`basis: interpretive`, and the test fails if any self-authored row is passed off as authoritative.
+It also asserts the artifact carries its disclaimer and the correct EU AI Act timeline.
+
+> **Not legal advice, not a conformity assessment.** ISO 42001 / EU AI Act / GenAI-Profile rows are
+> self-authored, category-level suggestions (never reproducing copyrighted standard text). The EU AI
+> Act timeline is carried in the artifact: GPAI provider obligations have applied **since 2 Aug
+> 2025**; enforcement/penalties and most high-risk obligations apply **from 2 Aug 2026**. Verify
+> against the current published standard text before use.
 
 ---
 
