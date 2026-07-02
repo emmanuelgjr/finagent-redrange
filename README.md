@@ -22,6 +22,9 @@ specific guardrails close each one** — end to end, from POC through regression
 > synthetic. Every exploit ships with the control that blocks it and a regression test that
 > keeps it closed. See [SECURITY.md](SECURITY.md).
 
+> 📖 **New here?** Start with the **[guided walkthrough](docs/WALKTHROUGH.md)** — a narrated tour of
+> what the range does, how to run it, and what each output means.
+
 ### At a glance
 
 |  |  |
