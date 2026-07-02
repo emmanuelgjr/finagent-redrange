@@ -442,6 +442,7 @@ def write(
 def _finding_json(f: Finding) -> dict:
     d = asdict(f)
     d.pop("transcript", None)  # keep the summary artifact compact; full logs live elsewhere
+    d.pop("detection", None)  # the detection signature is surfaced via the Sigma export, not here
     d["airq_composite"] = f.airq.composite
     d["airq_band"] = f.airq.band.value
     return d

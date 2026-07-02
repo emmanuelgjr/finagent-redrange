@@ -172,6 +172,37 @@ class AIRQScore:
         return Severity.LOW
 
 
+@dataclass(frozen=True)
+class FieldMatch:
+    """One condition on a single transcript event: ``field OP value``.
+
+    ``field`` is an event key (``role``, ``content``, ``tool_name``, ``tool_ok``) or a dotted
+    path into ``tool_args`` (e.g. ``tool_args.to_acct``). ``op`` is ``"eq"`` (exact match) or
+    ``"contains"`` (case-sensitive substring, for matching free-text content).
+    """
+
+    field: str
+    op: str
+    value: str | bool
+
+
+@dataclass(frozen=True)
+class DetectionSignature:
+    """An oracle-faithful description of *what a landed attack looks like* in an agent transcript.
+
+    It is the single source of truth the Sigma exporter renders into a rule AND the labeled-replay
+    harness evaluates against the range's transcripts — so an exported detection can never silently
+    drift from the oracle it was derived from (the equivalence is asserted in the test suite).
+
+    ``selection`` conditions are ANDed together against each event. With ``count_over_threshold``
+    unset the signature fires if ANY single event matches; when set it fires only if MORE THAN
+    that many events match (the unbounded-consumption count rule).
+    """
+
+    selection: tuple[FieldMatch, ...]
+    count_over_threshold: int | None = None
+
+
 @dataclass
 class Finding:
     """The unit of output: one attack attempt against the mock agent, judged + scored."""
@@ -186,3 +217,6 @@ class Finding:
     airq: AIRQScore
     validating_control: str
     mitigation_notes: str = ""
+    #: How a landed instance of this attack appears in a transcript — carried through so the
+    #: exporters (Sigma / detection-as-code) can render it. Populated from the scenario.
+    detection: DetectionSignature | None = None

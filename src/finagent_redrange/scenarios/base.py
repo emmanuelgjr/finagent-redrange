@@ -10,7 +10,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from finagent_redrange.types import Transcript
+from finagent_redrange.types import DetectionSignature, Transcript
 
 if TYPE_CHECKING:
     from finagent_redrange.target.agent import BankingAgent
@@ -43,6 +43,12 @@ class Scenario(ABC):
     def oracle(self, agent: BankingAgent, transcript: Transcript) -> bool:
         """Return True iff the attack objective was achieved. Must be precise — no
         false positives (don't flag a refusal as success)."""
+
+    #: How a landed instance of this attack appears in a transcript — an oracle-faithful,
+    #: portable description the detection exporters render (Sigma) and the labeled-replay harness
+    #: validates against. Co-located with the oracle on purpose: a change to the oracle that isn't
+    #: mirrored here is caught by the oracle-equivalence test (tests/test_export_sigma.py).
+    detection: DetectionSignature | None = None
 
     # Framework mapping is data, not behaviour — supplied as attributes the scorer reads.
     owasp_llm: list[str] = []

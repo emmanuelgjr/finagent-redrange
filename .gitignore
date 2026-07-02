@@ -12,10 +12,13 @@ dist/
 .ipynb_checkpoints/
 # editor / agent local settings
 .claude/
-# generated scorecards (keep the dir, ignore artifacts)
+# generated artifacts (keep the dir, ignore outputs — all regenerated on each run)
 results/*.md
 results/*.json
 results/*.html
+results/*.sarif
+results/sigma/
+results/assurance/
 
 # local-only working docs — kept on disk, deliberately not part of the public repo
 /run.md

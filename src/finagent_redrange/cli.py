@@ -16,6 +16,7 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from finagent_redrange import exports
 from finagent_redrange.attacker.engine import AutonomousReport, run_autonomous, run_campaign
 from finagent_redrange.attacker.seeds import SeedLibrary
 from finagent_redrange.llm.client import get_client
@@ -99,6 +100,32 @@ def autonomous_reports(model: str) -> list[AutonomousReport]:
     return reports
 
 
+def _write_handouts(args: argparse.Namespace, off: list[Finding], on: list[Finding]) -> None:
+    """Write the opt-in handout artifacts (Sigma / SARIF / assurance case).
+
+    These are evidence-derived and need BOTH control passes — the Sigma precision matrix and the
+    assurance case pair each controls-off exploit with its controls-on block — so they only run on
+    a `--controls both` run.
+    """
+    want_sigma = args.sigma or args.handouts
+    want_sarif = args.sarif or args.handouts
+    want_assurance = args.assurance or args.handouts
+    if not (want_sigma or want_sarif or want_assurance):
+        return
+    if not (off and on):
+        print("note: handout exports need both control passes — re-run with `--controls both`")
+        return
+    if want_sigma:
+        exports.write_sigma(off, on, RESULTS_DIR)
+        print(f"Wrote {RESULTS_DIR / 'sigma'} (Sigma rules + precision_report.md)")
+    if want_sarif:
+        exports.write_sarif(off, on, RESULTS_DIR)
+        print(f"Wrote {RESULTS_DIR / 'findings.sarif'} (SARIF 2.1.0)")
+    if want_assurance:
+        exports.write_assurance(off, on, RESULTS_DIR)
+        print(f"Wrote {RESULTS_DIR / 'assurance'} (GSN assurance case + evidence)")
+
+
 def run(args: argparse.Namespace) -> None:
     if args.controls == "both":
         off = _run_pass(args.model, controls_on=False)
@@ -114,6 +141,7 @@ def run(args: argparse.Namespace) -> None:
     if getattr(args, "transcripts", False):
         scorecard.write_transcripts(off, on, RESULTS_DIR)
         print(f"Wrote {RESULTS_DIR / 'transcripts.md'} (full conversations)")
+    _write_handouts(args, off, on)
     for f in off + on:
         state = "controls-on " if f.guardrails_enabled else "controls-off"
         print(f"  [{state}] {f.scenario_id}: {'EXPLOITED' if f.succeeded else 'blocked'}")
@@ -169,6 +197,26 @@ def main() -> None:
         "--transcripts",
         action="store_true",
         help="also dump full conversations to results/transcripts.md (evidence)",
+    )
+    r.add_argument(
+        "--sigma",
+        action="store_true",
+        help="also export Sigma rules + a labeled-replay precision report to results/sigma/",
+    )
+    r.add_argument(
+        "--sarif",
+        action="store_true",
+        help="also export a SARIF 2.1.0 findings run to results/findings.sarif",
+    )
+    r.add_argument(
+        "--assurance",
+        action="store_true",
+        help="also export a GSN control-effectiveness assurance case to results/assurance/",
+    )
+    r.add_argument(
+        "--handouts",
+        action="store_true",
+        help="shortcut: export all handout artifacts (sigma + sarif + assurance)",
     )
     r.set_defaults(func=run)
     a = sub.add_parser("auto", help="run the autonomous attacker against an objective")

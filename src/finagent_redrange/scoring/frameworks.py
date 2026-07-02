@@ -39,7 +39,7 @@ REFERENCE: dict[str, str] = {
     "T6": "Agentic — Intent Breaking & Goal Manipulation",
     # OWASP "Top 10 for Agentic Applications" 2026 (the ranked agentic Top 10, ASI01–ASI10) —
     # the newer, incident-grounded benchmark that complements the T1–T15 taxonomy above.
-    "ASI01": "Agentic Top 10 — Agent Goal Hijack",
+    "ASI01": "Agentic Top 10 — Agent Behavior Hijacking",
     "ASI02": "Agentic Top 10 — Tool Misuse & Exploitation",
     "ASI03": "Agentic Top 10 — Identity & Privilege Abuse",
     "ASI04": "Agentic Top 10 — Agentic Supply Chain Vulnerabilities",

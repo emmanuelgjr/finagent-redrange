@@ -53,6 +53,7 @@ def run_campaign(scenario: Scenario, agent: BankingAgent) -> Finding:
         airq=score,
         validating_control=scenario.validating_control,
         mitigation_notes=scenario.mitigation_notes,
+        detection=scenario.detection,
     )
 
 
