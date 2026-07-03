@@ -22,7 +22,7 @@ shipped the fix, and proved it holds."
 
 ```bash
 pip install -e ".[dev]"
-python -m finagent_redrange run     # all 8 scenarios, controls off then on
+python -m finagent_redrange run     # all 9 scenarios, controls off then on
 pytest -q                           # the regression suite
 ```
 
@@ -57,9 +57,9 @@ An **oracle** decides whether each attack landed by inspecting the transcript. F
 semantic *adoption-vs-refutation* judge (`scenarios/judge.py`) avoids a classic false positive: a
 model that quotes a poisoned claim only to *refute* it is scored as a refusal, not an exploit.
 
-## The eight scenarios
+## The nine scenarios
 
-Full OWASP LLM Top 10 coverage, each a dedicated POC + control pair:
+Full OWASP LLM Top 10 coverage plus a multimodal input surface, each a dedicated POC + control pair:
 
 | Attack | Blocked by |
 |---|---|
@@ -71,6 +71,7 @@ Full OWASP LLM Top 10 coverage, each a dedicated POC + control pair:
 | Vector/embedding weakness → cross-session leak | Access-scoped retrieval |
 | Unbounded consumption → tool-budget exhaustion | Per-request tool-call budget |
 | Supply chain → malicious third-party tool | Verified-publisher tool allowlist |
+| Multimodal injection → instruction hidden in an image | Multimodal input guardrail (OCR text as data) |
 
 ## The autonomous attacker
 

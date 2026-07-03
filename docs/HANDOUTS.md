@@ -43,11 +43,11 @@ the shipped detection cannot silently drift from the validated oracle.
 
 ### How it validates (precision)
 `tests/test_export_sigma.py` runs a **full labeled-replay confusion matrix**: every rule is replayed
-against all 16 transcripts (8 controls-off + 8 controls-on). A rule must fire on its own exploited
+against all 18 transcripts (9 controls-off + 9 controls-on). A rule must fire on its own exploited
 transcript (TP) and stay silent on its blocked transcript *and every other scenario's* transcripts
 (TN). Any cross-fire (FP) or miss (FN) **fails the build**. It also asserts **oracle equivalence** —
 `evaluate(signature) == finding.succeeded` on both labels — so the exported rule provably reproduces
-the oracle verdict. Current result: **8 TP, 0 FP, 0 FN, 120 TN → precision = recall = 1.00.**
+the oracle verdict. Current result: **9 TP, 0 FP, 0 FN, 153 TN → precision = recall = 1.00.**
 
 > **Honest scope.** This precision is *oracle/translation fidelity over the range's own labeled
 > corpus* — it proves each rule faithfully reproduces its validated oracle and doesn't cross-fire.
