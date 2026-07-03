@@ -213,7 +213,13 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
 - ~~Publish to PyPI~~ ✅ shipped — [`finagent-redrange`](https://pypi.org/project/finagent-redrange/)
   on PyPI (`pip install finagent-redrange`), released via a secure OIDC Trusted-Publishing workflow
   (`.github/workflows/publish.yml`) — no token stored.
-- Next: seed the attacker from a larger real-world incident dataset.
+- ~~Seed the attacker from a larger real-world incident dataset~~ ✅ shipped — the optional
+  `[incidents]` extra (`pip install "finagent-redrange[incidents]"`) seeds the autonomous attacker
+  from the [genai-incidents](https://github.com/emmanuelgjr/genai_incidents) corpus (12k+ real
+  GenAI/agentic incidents): `SeedLibrary.from_genai_incidents()` maps each incident to a scenario
+  technique, orders by real-world severity, and records its provenance. **Scope-safe:** incidents
+  supply the technique + prioritization + provenance only — every payload stays a synthetic
+  mock-agent probe (no incident text is reproduced). Data credited under CC BY 4.0 (see NOTICE).
 
 ## License & citation
 

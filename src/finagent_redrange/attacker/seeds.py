@@ -55,5 +55,20 @@ class SeedLibrary:
         raw = yaml.safe_load(src.read_text(encoding="utf-8")) or []
         return cls([Seed(**s) for s in raw])
 
+    @classmethod
+    def from_genai_incidents(cls, **kwargs) -> SeedLibrary:
+        """Build a seed library from the `genai-incidents` real-world corpus (12k+ incidents).
+
+        Requires the optional extra: ``pip install "finagent-redrange[incidents]"``. Each seed
+        carries a synthetic, mock-agent-targeted payload plus the originating incident's id +
+        reference in ``source`` (attribution/traceability). Kwargs are forwarded to
+        ``attacker.incident_adapter.load_seeds`` (corpus, quality_tiers, severities, techniques,
+        limit_per_technique). This is the "larger real-world dataset" upgrade to
+        :meth:`from_incident_db`; the bundled corpus stays the offline default.
+        """
+        from finagent_redrange.attacker.incident_adapter import load_seeds
+
+        return cls(load_seeds(**kwargs))
+
     def by_technique(self, technique: str) -> list[Seed]:
         return [s for s in self._seeds if s.technique == technique]

@@ -41,6 +41,8 @@ dev = [
 ]
 # Real-model runs need a provider SDK; keep it optional so the offline suite has no deps.
 anthropic = ["anthropic>=0.39"]
+# Seed the autonomous attacker from the genai-incidents real-world corpus (optional; CC BY 4.0 data).
+incidents = ["genai-incidents>=2.6"]
 
 [project.scripts]
 finagent-redrange = "finagent_redrange.cli:main"

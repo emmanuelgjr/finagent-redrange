@@ -15,3 +15,12 @@ Attribution is required. If you reuse this work, its harness, its framework
 crosswalk, or its findings, retain this notice and cite the project as described
 in CITATION.cff. This NOTICE file must be propagated with redistributions per
 section 4(d) of the Apache License.
+
+Third-party data attribution:
+  - The optional "incidents" extra (pip install "finagent-redrange[incidents]") seeds the
+    autonomous attacker from the "genai-incidents" dataset
+    (https://github.com/emmanuelgjr/genai_incidents · pip install genai-incidents), which is
+    licensed under the Creative Commons Attribution 4.0 International license (CC BY 4.0).
+    FinAgent-RedRange uses it only for technique categorization, real-world prioritization, and
+    provenance — no incident write-up text is reproduced in any payload. If you enable that extra,
+    retain this attribution to the genai-incidents authors.
