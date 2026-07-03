@@ -56,7 +56,7 @@ def test_run_handouts_writes_every_artifact(tmp_path, monkeypatch) -> None:
 
     assert (tmp_path / "scorecard.md").exists()
     assert (tmp_path / "scorecard.json").exists()
-    assert len(list((tmp_path / "sigma").glob("*.yml"))) == 8
+    assert len(list((tmp_path / "sigma").glob("*.yml"))) == len(cli.SCENARIOS)
     assert (tmp_path / "sigma" / "precision_report.md").exists()
     assert (tmp_path / "findings.sarif").exists()
     assert (tmp_path / "assurance" / "assurance-case.json").exists()

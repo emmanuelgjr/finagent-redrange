@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from finagent_redrange.scoring import frameworks
-from finagent_redrange.types import RETRIEVAL_TOOL, Finding, Role, Turn
+from finagent_redrange.types import RETRIEVAL_TOOL, VISION_TOOL, Finding, Role, Turn
 
 if TYPE_CHECKING:
     from finagent_redrange.attacker.engine import AutonomousReport
@@ -379,6 +379,8 @@ def _render_turn(t: Turn) -> str:
     if t.role is Role.TOOL:
         if t.tool_name == RETRIEVAL_TOOL:
             return f"- **Retrieved (RAG):** {t.content}"
+        if t.tool_name == VISION_TOOL:
+            return f"- **Vision (OCR):** {t.content}"
         status = "ok" if t.tool_ok else "BLOCKED"
         return f"- **Tool[{t.tool_name} → {status}]:** {t.content}"
     return f"- **{t.role}:** {t.content}"

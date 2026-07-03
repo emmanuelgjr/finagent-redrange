@@ -29,6 +29,7 @@ from finagent_redrange.llm.client import get_client
 from finagent_redrange.scenarios.data_poisoning import DataPoisoningScenario
 from finagent_redrange.scenarios.excessive_agency import ExcessiveAgencyScenario
 from finagent_redrange.scenarios.indirect_prompt_injection import IndirectPromptInjectionScenario
+from finagent_redrange.scenarios.multimodal_injection import MultimodalInjectionScenario
 from finagent_redrange.scenarios.supply_chain import SupplyChainScenario
 from finagent_redrange.scenarios.system_prompt_leakage import SystemPromptLeakageScenario
 from finagent_redrange.scenarios.unbounded_consumption import UnboundedConsumptionScenario
@@ -63,6 +64,7 @@ SCENARIOS: list[Scenario] = [
     VectorEmbeddingWeaknessScenario(),
     UnboundedConsumptionScenario(),
     SupplyChainScenario(),
+    MultimodalInjectionScenario(),
 ]
 
 

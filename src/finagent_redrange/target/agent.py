@@ -16,7 +16,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from finagent_redrange.llm.client import LLMClient
-from finagent_redrange.types import RETRIEVAL_TOOL, SYSTEM_PROMPT_CANARY, Role, Transcript
+from finagent_redrange.types import (
+    RETRIEVAL_TOOL,
+    SYSTEM_PROMPT_CANARY,
+    VISION_TOOL,
+    ImageInput,
+    Role,
+    Transcript,
+)
 
 #: Bound on the plan->act->observe loop so a misbehaving model can't spin forever. This caps
 #: tool-loop cost (a crude touchpoint on OWASP LLM10 unbounded consumption) but LLM10 is NOT a
@@ -116,12 +123,13 @@ class BankingAgent:
     tools: ToolRegistry
     transcript: Transcript = field(default_factory=Transcript)
 
-    def respond(self, user_text: str) -> str:
+    def respond(self, user_text: str, images: list[ImageInput] | None = None) -> str:
         """Single public surface. Returns the final answer shown to the user.
 
         Runs a bounded plan->act->observe loop: the planner may request tool calls, each of
         which is permission-checked (tools.py) AND action-gated by the guardrails (the
-        excessive-agency control), then has its result fed back for the next step.
+        excessive-agency control), then has its result fed back for the next step. ``images`` is
+        the optional multimodal input surface — text a vision/OCR step extracts is untrusted data.
         """
         self.transcript.add(Role.USER, user_text)
 
@@ -130,6 +138,12 @@ class BankingAgent:
             answer = "I can't help with that request."
             self.transcript.add(Role.ASSISTANT, answer)
             return answer
+
+        # Multimodal input surface (OWASP LLM01, multimodal): the vision/OCR step extracts text from
+        # each attached image; the multimodal guardrail drops instruction-bearing images (controls
+        # on), and surviving OCR text enters context as data — which a naive agent may act on.
+        for img in self.guardrails.check_multimodal(images or []):
+            self.transcript.add(Role.TOOL, img.ocr_text, tool_name=VISION_TOOL)
 
         chunks = self.guardrails.check_retrieved(
             self.knowledge.retrieve(user_text), self.knowledge, self.tools.session

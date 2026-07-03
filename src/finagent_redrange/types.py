@@ -20,6 +20,11 @@ class Role(StrEnum):
 #: tool_name sentinel for RAG context surfaced to the model as data (not a tool *result*).
 RETRIEVAL_TOOL = "retrieve"
 
+#: tool_name sentinel for text a vision/OCR step extracted from an image input — surfaced to the
+#: model as data (the multimodal input surface). Kept distinct from RETRIEVAL_TOOL so a scenario /
+#: guardrail can reason about the *modality* the content arrived through (OWASP LLM01, multimodal).
+VISION_TOOL = "vision"
+
 #: Canary token embedded in the agent's system prompt. It exists ONLY there, so if it ever
 #: appears in an answer the system prompt has leaked (OWASP LLM07). The output guardrail
 #: blocks any answer carrying it; the leakage oracle detects it. (A documented detection
@@ -116,6 +121,20 @@ class ModelResponse:
     text: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
     stop_reason: str = "end_turn"  # "tool_use" when tool_calls is non-empty
+
+
+@dataclass
+class ImageInput:
+    """A mock multimodal input: an image whose text a vision/OCR step would extract.
+
+    ``ocr_text`` is what a vision model / OCR would read out of the image — the surface a multimodal
+    prompt injection rides in on. Deterministic and offline: the range treats ``ocr_text`` as the
+    extracted content directly, so no real vision model is needed to exercise the modality.
+    """
+
+    caption: str
+    ocr_text: str
+    source: str = ""
 
 
 class Severity(StrEnum):

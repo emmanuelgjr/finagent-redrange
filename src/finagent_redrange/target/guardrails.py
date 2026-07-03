@@ -23,6 +23,7 @@ from finagent_redrange.types import SYSTEM_PROMPT_CANARY, ToolCall
 
 if TYPE_CHECKING:  # avoid an import cycle with the RAG store at module load
     from finagent_redrange.target.agent import KnowledgeStore, RetrievedChunk
+    from finagent_redrange.types import ImageInput
 
 # Direct-injection patterns on *user* input. Deliberately narrow — scoped to the agent's own
 # instructions/persona — so ordinary banking phrasing ("disregard the previous transaction",
@@ -105,6 +106,18 @@ class Guardrails:
         if _DIRECT_INJECTION.search(user_text):
             return GuardrailDecision(False, reason="direct prompt-injection pattern in user input")
         return GuardrailDecision(True)
+
+    def check_multimodal(self, images: list[ImageInput]) -> list[ImageInput]:
+        """Filter multimodal (image / OCR) inputs — the multimodal prompt-injection control (LLM01).
+
+        Text extracted from an image is untrusted DATA, never instructions. With controls off every
+        image's OCR text flows into context, so an injected instruction hidden in an image lands.
+        With controls on, any image whose extracted text carries direct-injection phrasing is
+        dropped before it can reach the planner — benign images (ordinary screenshots) still pass,
+        so this is precise, not a blanket refusal of image inputs."""
+        if not self.enabled:
+            return images
+        return [img for img in images if not _DIRECT_INJECTION.search(img.ocr_text)]
 
     def check_retrieved(
         self,
