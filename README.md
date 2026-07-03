@@ -5,6 +5,7 @@
 **A reproducible, _defensive_ red-team range for financial-services AI agents.**
 
 [![CI](https://github.com/emmanuelgjr/finagent-redrange/actions/workflows/ci.yml/badge.svg)](https://github.com/emmanuelgjr/finagent-redrange/actions/workflows/ci.yml)
+&nbsp;[![PyPI](https://img.shields.io/pypi/v/finagent-redrange?logo=pypi&logoColor=white)](https://pypi.org/project/finagent-redrange/)
 &nbsp;![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
 &nbsp;![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 &nbsp;![Lint](https://img.shields.io/badge/lint-ruff-261230?logo=ruff&logoColor=white)
@@ -35,7 +36,7 @@ specific guardrails close each one** — end to end, from POC through regression
 | **Extras** | permission-checked tool loop · sweep + **adaptive-LLM** autonomous attacker · semantic real-model oracle · md / json / **html** scorecard |
 | **Handouts** | ready-to-use exports for security teams — **Sigma** detection pack (measured precision) · **SARIF 2.1.0** findings · **GSN assurance case** · **regulatory crosswalk** (NIST/ISO 42001/EU AI Act) · **ATLAS Navigator** coverage layer. See [docs/HANDOUTS.md](docs/HANDOUTS.md) |
 | **Runs** | fully offline & deterministic — **no API key** · 97 tests green in CI (Python 3.11 / 3.12) |
-| **Try it** | `pip install -e ".[dev]" && python -m finagent_redrange run` |
+| **Try it** | `pip install finagent-redrange && python -m finagent_redrange run` (or `pip install -e ".[dev]"` from a clone) |
 
 <p align="center">
   <img src="docs/scorecard.png" alt="FinAgent-RedRange scorecard — eight scenarios exploited with controls off and blocked with controls on, OWASP LLM and Agentic coverage matrices, and the autonomous-attacker result" width="900">
@@ -209,8 +210,10 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
 - ~~Multimodal attack surfaces~~ ✅ shipped — a **multimodal injection** scenario: an instruction
   hidden in an uploaded image's OCR text, blocked by a multimodal input guardrail that treats
   extracted image text as untrusted data (`target/agent.py` gained an optional `images=` surface).
-- Next: seed the attacker from a larger real-world incident dataset; publish to PyPI (the package
-  is publish-ready — a Trusted-Publishing workflow ships in `.github/workflows/publish.yml`).
+- ~~Publish to PyPI~~ ✅ shipped — [`finagent-redrange`](https://pypi.org/project/finagent-redrange/)
+  on PyPI (`pip install finagent-redrange`), released via a secure OIDC Trusted-Publishing workflow
+  (`.github/workflows/publish.yml`) — no token stored.
+- Next: seed the attacker from a larger real-world incident dataset.
 
 ## License & citation
 
