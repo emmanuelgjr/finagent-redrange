@@ -24,7 +24,8 @@ specific guardrails close each one** — end to end, from POC through regression
 > keeps it closed. See [SECURITY.md](SECURITY.md).
 
 > 📖 **New here?** Start with the **[guided walkthrough](docs/WALKTHROUGH.md)** — a narrated tour of
-> what the range does, how to run it, and what each output means.
+> what the range does, how to run it, and what each output means — or the **[short paper](docs/whitepaper.md)**
+> for the research framing (incl. a real-model exploit→block).
 
 ### At a glance
 

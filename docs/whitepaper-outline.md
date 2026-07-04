@@ -1,5 +1,8 @@
 # Whitepaper outline — "Validating Agentic AI Defenses in Financial Services: A Reproducible Red-Team Range"
 
+> **A finished, publishable ~1,500-word version now lives in [docs/whitepaper.md](whitepaper.md).**
+> This file remains the long-form (8–12 page) expansion plan.
+
 Target length: 8–12 pages. Audience: AI security engineers and security leadership at a bank.
 Purpose: frame the repo as research, not just code. Pairs with the FinAgent-RedRange scorecard.
 
@@ -24,9 +27,9 @@ finding mapped to OWASP / MITRE ATLAS / NIST AI RMF.
 - The reference agent: a plan→act→observe tool loop over five permission-checked tools
   (balance, transfer, KYC, list-transactions, support ticket) + RAG + toggleable guardrails
   (input / retrieval / action / output).
-- Attack surfaces (implemented): indirect prompt injection, data poisoning, excessive agency,
-  system-prompt leakage, unsafe output handling; (roadmap) model theft, supply chain. Diagram
-  (reuse the README Mermaid).
+- Attack surfaces (all nine implemented): indirect prompt injection, data poisoning, excessive
+  agency, system-prompt leakage, unsafe output handling, vector/embedding weakness, unbounded
+  consumption, supply chain, and multimodal injection. Diagram (reuse the README Mermaid).
 - Mapping each surface to OWASP LLM Top 10, both OWASP agentic schemes — Agentic AI Threats &
   Mitigations (T1–T15) and the 2026 Top 10 for Agentic Applications (ASI01–ASI10) — MITRE ATLAS,
   and NIST AI RMF. Be explicit where a surface has no honest agentic mapping.
