@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -212,7 +213,7 @@ def run_robustness(args: argparse.Namespace) -> None:
     print(f"Wrote {RESULTS_DIR / 'robustness.md'} (control-bypass robustness matrix)\n")
     print(
         f"In-fold-set mechanical evasions (controls on): "
-        f"naive {report.mechanical_bypass_naive}/{m_tot} → "
+        f"naive {report.mechanical_bypass_naive}/{m_tot} -> "
         f"hardened {report.mechanical_bypass_hardened}/{m_tot}"
     )
     print(
@@ -269,7 +270,24 @@ def load_dotenv() -> None:
         return  # first .env found wins
 
 
+def _harden_stdout_utf8() -> None:
+    """Best-effort: switch stdout/stderr to UTF-8 so CLI summaries survive a legacy codepage.
+
+    On Windows the console default is cp1252, which can't encode characters the reports use (an
+    arrow, a dagger), and a redirected/piped stdout raises UnicodeEncodeError on the first one. We
+    keep the printed strings ASCII, but this hardens against any that slip in. Silently skips if the
+    stream can't be reconfigured (e.g. already wrapped by a test harness)."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8")
+            except (ValueError, OSError):
+                pass
+
+
 def main() -> None:
+    _harden_stdout_utf8()
     load_dotenv()
     p = argparse.ArgumentParser(prog="finagent_redrange")
     sub = p.add_subparsers(dest="cmd", required=True)

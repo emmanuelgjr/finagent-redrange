@@ -47,9 +47,9 @@ CASCADE_MARKER = "CASCADE-HOP"
 #: ASI05 canary the MOCK sink stamps when a general eval sink WOULD run — it never actually runs.
 CODE_EXEC_MARKER = "CODE-EXEC"
 
-# Strict arithmetic whitelist. Deliberately EXCLUDES Pow (no exponentiation DoS), Name, Call,
-# Attribute, Subscript, Mod, comparisons, and comprehensions — anything that could reach a
-# non-arithmetic effect. Any node outside this set raises before evaluation.
+# Strict arithmetic whitelist for the SAFE evaluator: Pow is deliberately excluded (no
+# exponentiation DoS), along with Mod, comparisons, etc. Any node outside this set is rejected
+# before evaluation — but see _CODE_EXEC_NODES: only the *escape* constructs model code execution.
 _ARITH_NODES: tuple[type[ast.AST], ...] = (
     ast.Expression,
     ast.BinOp,
@@ -61,6 +61,24 @@ _ARITH_NODES: tuple[type[ast.AST], ...] = (
     ast.Div,
     ast.USub,
     ast.UAdd,
+)
+# The AST nodes that let a formula ESCAPE arithmetic into code execution — a name lookup, a call, an
+# attribute/subscript access, a lambda, a comprehension, a walrus. These (and ONLY these) model the
+# code-exec sink and trigger the CODE-EXEC canary. A merely-out-of-grammar-but-harmless operator
+# (Pow, Mod, comparison) is NOT here: a real eval would compute it, not run attacker code, so it's
+# a grammar/compute rejection, never the canary. (`2 ** 3` must not be mislabeled as code exec.)
+_CODE_EXEC_NODES: tuple[type[ast.AST], ...] = (
+    ast.Call,
+    ast.Name,
+    ast.Attribute,
+    ast.Subscript,
+    ast.Starred,
+    ast.Lambda,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+    ast.GeneratorExp,
+    ast.NamedExpr,
 )
 _ARITH_OPS: dict[type, Callable[..., float]] = {
     ast.Add: operator.add,
@@ -82,31 +100,48 @@ def _sign(sender: str, intent: str, payload: dict) -> str:
     return hashlib.sha256(canon.encode()).hexdigest()[:16]
 
 
+class _NonArithmetic(Exception):
+    """The formula contains a non-arithmetic AST node (a Call / Name / Attribute / import / ...).
+
+    This is the ONLY case that models a general code-exec sink — a real ``eval()`` would RUN it. It
+    is kept distinct from malformed input (``SyntaxError``) and from a compute error on valid
+    arithmetic (``ZeroDivisionError`` / an out-of-range or non-numeric literal), so the CODE-EXEC
+    canary fires ONLY for genuine code constructs and never mislabels ``1/0`` or a giant literal."""
+
+
 def _safe_arith(expr: str) -> float:
     """Evaluate ONLY a restricted arithmetic grammar via a whitelisted AST walk — the ASI05 SAFE
-    path. Raises on any non-arithmetic node.
+    path. Distinguishes three failure modes so the caller can label them honestly:
+
+      * a non-arithmetic node -> :class:`_NonArithmetic` (the code-exec signal);
+      * malformed input -> ``SyntaxError`` from ``ast.parse`` (propagated);
+      * valid arithmetic that can't compute (divide-by-zero, out-of-range/non-numeric literal) ->
+        ``ZeroDivisionError`` / ``ValueError`` (a compute error, NOT code exec).
 
     SAFETY: ``ast.parse(mode="eval")`` only builds a tree (it never runs the code); the walk raises
     on the first non-arithmetic node BEFORE ``ev()`` is entered; ``ev()`` only ever handles
     Constant / UnaryOp / BinOp. Call / Name / Attribute / import can never be evaluated here.
     """
-    tree = ast.parse(expr, mode="eval")  # parse only — imports/calls nothing
+    tree = ast.parse(expr, mode="eval")  # parse only — runs nothing; a SyntaxError propagates
     for node in ast.walk(tree):
+        if isinstance(node, _CODE_EXEC_NODES):
+            raise _NonArithmetic(type(node).__name__)  # an escape construct -> the code-exec signal
         if not isinstance(node, _ARITH_NODES):
-            raise ValueError(f"non-arithmetic node: {type(node).__name__}")
+            # Out of the restricted grammar but NOT a code-exec escape (e.g. Pow, Mod, comparison):
+            # a real eval would compute it, so it's a grammar/compute rejection, never the canary.
+            raise ValueError(f"outside restricted arithmetic: {type(node).__name__}")
 
     def ev(n: ast.AST) -> float:
         if isinstance(n, ast.Expression):
             return ev(n.body)
         if isinstance(n, ast.Constant):
             if isinstance(n.value, bool) or not isinstance(n.value, int | float):
-                raise ValueError("non-numeric constant")
+                raise ValueError("non-numeric constant")  # data, not code — a compute error
             try:
                 return float(n.value)
             except OverflowError as e:
-                # An in-range-looking but astronomically large integer literal ("9"*400) overflows
-                # float conversion. Surface it as the ValueError the evaluator already rejects on,
-                # so evaluate_formula keeps its no-raise contract (reject on / inert canary off).
+                # An astronomically large integer literal ("9"*400) overflows float conversion — a
+                # compute error on valid arithmetic, NOT code exec. Surface it as a ValueError.
                 raise ValueError("numeric literal out of range") from e
         if isinstance(n, ast.UnaryOp):
             return _ARITH_OPS[type(n.op)](ev(n.operand))
@@ -181,23 +216,30 @@ class MultiAgentGuardrails:
     def evaluate_formula(self, expr: str) -> tuple[bool, str]:
         """ASI05 — restricted-arithmetic evaluator vs a MOCK code-exec sink. Returns (ok, rendered).
 
-        Controls ON: only restricted arithmetic is accepted; anything else is rejected (no canary,
-        nothing runs). Controls OFF: benign arithmetic still computes, but a non-arithmetic payload
-        (which a real ``eval`` sink WOULD run) is only RECORDED as an inert canary — nothing runs.
+        Three cases, kept honest so the CODE-EXEC canary never mislabels an input:
+          * valid restricted arithmetic -> ``result=X`` in both states (no over-block);
+          * a NON-ARITHMETIC construct (Call / import / attribute — what a real ``eval`` sink WOULD
+            run): controls ON rejects it; controls OFF records the inert canary (nothing runs);
+          * malformed input or a compute error on valid arithmetic (``1/0``, a giant literal): a
+            parse/compute error in BOTH states — NOT the code-exec canary, because a real ``eval``
+            would raise, not execute attacker code. This is the ASI05 signal's honesty guarantee.
+
+        Nothing is ever executed — see ``_safe_arith``.
         """
-        if self.enabled:  # SAFE path: arithmetic only; no canary, no exec
-            try:
-                return True, f"result={_safe_arith(expr):g}"
-            except (ValueError, SyntaxError, KeyError, ZeroDivisionError, RecursionError):
-                return False, "rejected: input is not restricted arithmetic"
-        try:  # VULNERABLE path — benign arithmetic still computes
+        try:
             return True, f"result={_safe_arith(expr):g}"
-        except (ValueError, SyntaxError, KeyError, ZeroDivisionError, RecursionError):
-            # A real eval() sink WOULD execute this. We ONLY record that it would — nothing runs.
+        except _NonArithmetic:
+            # The only code-exec signal: a general eval sink WOULD run this construct.
+            if self.enabled:
+                return False, "rejected: formula contains non-arithmetic constructs"
             return (
                 True,
                 f"{CODE_EXEC_MARKER}: general eval sink would execute {expr!r} (not run here)",
             )
+        except (SyntaxError, ValueError, KeyError, ZeroDivisionError, RecursionError) as e:
+            # Malformed, or valid arithmetic that can't compute — a parse/compute error, not code
+            # exec. Same verdict in both control states; the canary deliberately does NOT fire.
+            return False, f"rejected: not evaluable as restricted arithmetic ({type(e).__name__})"
 
 
 @dataclass

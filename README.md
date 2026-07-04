@@ -36,7 +36,7 @@ specific guardrails close each one** — end to end, from POC through regression
 | **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean AIRQ heuristic **High → Medium** |
 | **Extras** | permission-checked tool loop · sweep + **adaptive-LLM** autonomous attacker · **control-bypass robustness eval** (measured guardrail bypass rates) · semantic real-model oracle · md / json / **html** scorecard |
 | **Handouts** | ready-to-use exports for security teams — **Sigma** detection pack (measured precision) · **SARIF 2.1.0** findings · **GSN assurance case** · **regulatory crosswalk** (NIST/ISO 42001/EU AI Act) · **ATLAS Navigator** coverage layer. See [docs/HANDOUTS.md](docs/HANDOUTS.md) |
-| **Runs** | fully offline & deterministic — **no API key** · 161 tests green in CI (Python 3.11 / 3.12) |
+| **Runs** | fully offline & deterministic — **no API key** · 177 tests green in CI (Python 3.11 / 3.12) |
 | **Try it** | `pip install finagent-redrange && python -m finagent_redrange run` (or `pip install -e ".[dev]"` from a clone) |
 
 <p align="center">

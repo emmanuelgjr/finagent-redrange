@@ -115,28 +115,41 @@ def test_formula_accepts_arithmetic_both_toggles(enabled: bool) -> None:  # no o
 
 @pytest.mark.parametrize("enabled", [True, False])
 def test_formula_oversized_literal_does_not_raise(enabled: bool) -> None:
-    """An astronomically large integer literal overflows float conversion; the evaluator must keep
-    its no-raise contract (reject controls-on / inert canary controls-off), never propagate the
-    OverflowError out of evaluate_formula."""
+    """An astronomically large integer literal overflows float conversion — a COMPUTE error on valid
+    arithmetic, NOT code execution. The evaluator must keep its no-raise contract and reject it in
+    BOTH states WITHOUT stamping the code-exec canary (a giant number is not an attack)."""
     ok, rendered = _g(enabled).evaluate_formula("9" * 400)
-    if enabled:
-        assert (ok, rendered) == (False, "rejected: input is not restricted arithmetic")
-    else:
-        assert ok is True and CODE_EXEC_MARKER in rendered
+    assert ok is False
+    assert CODE_EXEC_MARKER not in rendered  # overflow != code-exec — canary must not fire
+
+
+@pytest.mark.parametrize("expr", ["1/0", "1+", "2 ** 3", "2 % 3", "'hello'", "2 < 3"])
+def test_formula_compute_errors_are_not_code_exec(expr: str) -> None:
+    """Honesty guard: inputs that are malformed, out-of-grammar, or valid arithmetic that can't
+    compute (divide-by-zero, disallowed operator) are rejected in both states but must NEVER stamp
+    the CODE-EXEC canary — a real eval would raise or compute, not run attacker code. This keeps
+    the ASI05 oracle (keyed on the canary) from mislabeling a non-attack as landed code-exec."""
+    for enabled in (True, False):
+        ok, rendered = _g(enabled).evaluate_formula(expr)
+        assert ok is False, f"{expr!r} should be rejected (enabled={enabled})"
+        assert CODE_EXEC_MARKER not in rendered, f"{expr!r} wrongly stamped the code-exec canary"
 
 
 def test_formula_never_executes(tmp_path) -> None:
     """SAFETY regression guard: a payload whose only effect requires REAL code execution must never
     produce that effect in either state. If a real sink is ever reintroduced, this test fails."""
+    # as_posix() so the path has no backslashes — a Windows tmp_path like C:\Users\... would make
+    # the payload string a \U-escape SyntaxError instead of a parseable code-exec Call node.
     sentinel = tmp_path / "MUST_NOT_EXIST.flag"
-    payload = f"__import__('os').system('type nul > {sentinel}')"
+    payload = f"__import__('os').system('type nul > {sentinel.as_posix()}')"
     for enabled in (False, True):
         ok, rendered = _g(enabled).evaluate_formula(payload)
         assert not sentinel.exists()  # nothing ran: the side-effecting file was never created
         assert "result=" not in rendered  # no numeric result was ever produced for the payload
-    # controls-off models the sink (inert marker); controls-on rejects it — neither executes.
+    # A genuine code-exec construct: controls-off models the sink (inert marker), controls-on
+    # rejects it as a non-arithmetic construct — neither executes.
     assert CODE_EXEC_MARKER in _g(False).evaluate_formula(payload)[1]
     assert _g(True).evaluate_formula(payload) == (
         False,
-        "rejected: input is not restricted arithmetic",
+        "rejected: formula contains non-arithmetic constructs",
     )
