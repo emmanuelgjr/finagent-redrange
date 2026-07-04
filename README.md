@@ -149,14 +149,22 @@ works through every strategy it has.*
 "Controls on" only ever meant *held against the fixed campaign transforms*. `python -m
 finagent_redrange robustness` replaces that with a **measured bypass rate**: it sweeps each
 string-matching guardrail (user-input injection, multimodal OCR injection, retrieval
-instruction-markers) against documented evasion transforms — unicode homoglyphs, zero-width
-splitting, leetspeak, letter-spacing, and semantic paraphrase — with the control on, under a
-*naive* matcher and a *hardened* (normalization-on) one. The honest result written to
-`results/robustness.md`: the four **mechanical** evasions bypass the naive matcher **100%** but are
-folded back to **0%** by normalization, while the **semantic paraphrase still bypasses both** — the
-irreducible gap of a string heuristic, closeable only by a model-based classifier. The structural
-controls (output PII filter, action gate, consumption budget, supply-chain gate) aren't string
-matchers, so rephrasing doesn't defeat them and they're reported out of scope rather than omitted.
+instruction-markers) against documented evasion transforms with the control on, under a *naive*
+matcher and a *hardened* (normalization-on) one. The honest result written to `results/robustness.md`
+distinguishes **three** residual classes rather than claiming a clean win:
+
+- **In-fold-set mechanical** (the homoglyph/zero-width/leetspeak/letter-spacing characters the
+  normalization targets): bypass the naive matcher **12/12** → folded back to **0/12** hardened.
+- **Out-of-fold-set mechanical residual:** the *same* homoglyph category with characters *outside*
+  the fold table (Greek look-alikes) still bypasses the hardened matcher **3/3** — because the fold
+  is a hand-picked documented-character allowlist, not a general Unicode-confusables table. So
+  "hardened blocks mechanical" is honestly a documented-*set* claim, not a general one.
+- **Semantic-paraphrase residual:** still bypasses **3/3** — reachable only by a classifier.
+
+The action gate (numeric threshold), consumption budget (a count), and supply-chain gate (a boolean)
+are genuinely rephrasing-immune and out of scope. The **output PII redactor**, though, is a raw
+exact-substring matcher with *no* normalization, so it carries the same evasion residual on the
+output side — the report flags it honestly rather than claiming it immune.
 
 ## Quickstart
 

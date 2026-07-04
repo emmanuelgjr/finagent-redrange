@@ -211,9 +211,14 @@ def run_robustness(args: argparse.Namespace) -> None:
     m_tot = report.mechanical_total
     print(f"Wrote {RESULTS_DIR / 'robustness.md'} (control-bypass robustness matrix)\n")
     print(
-        f"Mechanical-evasion bypasses (controls on): "
+        f"In-fold-set mechanical evasions (controls on): "
         f"naive {report.mechanical_bypass_naive}/{m_tot} → "
         f"hardened {report.mechanical_bypass_hardened}/{m_tot}"
+    )
+    print(
+        f"Out-of-fold-set homoglyph residual (hardened): "
+        f"{report.open_bypass_hardened}/{report.open_total} still bypass "
+        "(fold is a documented-set allowlist, not a general confusables table)"
     )
     print(
         f"Semantic-paraphrase residual (hardened): "

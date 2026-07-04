@@ -54,6 +54,21 @@ def test_semantic_paraphrase_is_reported_as_residual() -> None:
     assert r.semantic_bypass_hardened == r.semantic_total
 
 
+def test_out_of_set_homoglyph_is_measured_open_residual() -> None:
+    """Honesty guard: the 'hardened blocks mechanical → 0' claim is a documented-SET claim, not a
+    general one. The SAME homoglyph category with characters OUTSIDE the fold table (Greek) must
+    bypass even the hardened matcher for every guardrail, and the eval must report it as such — so
+    the 0% is never mistaken for 'all homoglyph evasion defeated'."""
+    r = _report()
+    assert r.open_total == len(robustness.GUARDRAILS)
+    assert r.open_bypass_hardened == r.open_total  # bypasses hardened everywhere — a real residual
+    for c in r.cells:
+        if c.kind == "mechanical_open":
+            assert c.bypassed_hardened, (
+                f"{c.guardrail}: out-of-set homoglyph should bypass hardened"
+            )
+
+
 def test_every_guardrail_and_evasion_covered() -> None:
     """The matrix is complete: one cell per (guardrail x evasion)."""
     r = _report()

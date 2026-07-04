@@ -101,7 +101,13 @@ def _safe_arith(expr: str) -> float:
         if isinstance(n, ast.Constant):
             if isinstance(n.value, bool) or not isinstance(n.value, int | float):
                 raise ValueError("non-numeric constant")
-            return float(n.value)
+            try:
+                return float(n.value)
+            except OverflowError as e:
+                # An in-range-looking but astronomically large integer literal ("9"*400) overflows
+                # float conversion. Surface it as the ValueError the evaluator already rejects on,
+                # so evaluate_formula keeps its no-raise contract (reject on / inert canary off).
+                raise ValueError("numeric literal out of range") from e
         if isinstance(n, ast.UnaryOp):
             return _ARITH_OPS[type(n.op)](ev(n.operand))
         if isinstance(n, ast.BinOp):

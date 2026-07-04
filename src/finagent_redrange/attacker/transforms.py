@@ -95,10 +95,32 @@ _PARAPHRASES: list[tuple[str, str]] = [
 ]
 
 
+#: Latin -> Greek homoglyphs, DISJOINT from the Cyrillic set above (and from the defender's fold
+#: table). These are the same documented evasion CATEGORY (visual look-alikes) but outside the
+#: hand-picked characters the normalization folds, so they expose the honest residual that a
+#: fixed-set fold cannot close — a general confusables table or mixed-script detection would.
+_CONFUSABLES_GREEK = {
+    "a": "α",  # GREEK SMALL ALPHA
+    "o": "ο",  # GREEK SMALL OMICRON
+    "i": "ι",  # GREEK SMALL IOTA
+    "u": "υ",  # GREEK SMALL UPSILON
+    "v": "ν",  # GREEK SMALL NU
+    "p": "ρ",  # GREEK SMALL RHO
+}
+
+
 def unicode_confusables(payload: str) -> str:
     """Swap ASCII letters for visually-identical Unicode homoglyphs — a naive ASCII keyword filter
     no longer matches, but the text looks unchanged to a human (a documented evasion category)."""
     return "".join(_CONFUSABLES.get(ch, ch) for ch in payload)
+
+
+def mixed_script_homoglyphs(payload: str) -> str:
+    """Swap ASCII letters for GREEK homoglyphs outside the defender's fold table — the same visual
+    evasion category as ``unicode_confusables`` but with characters the normalization does not
+    reverse, so it stays readable AND slips past the hardened matcher (the measured out-of-set
+    mechanical residual)."""
+    return "".join(_CONFUSABLES_GREEK.get(ch, ch) for ch in payload)
 
 
 def zero_width(payload: str) -> str:

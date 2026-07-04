@@ -113,6 +113,18 @@ def test_formula_accepts_arithmetic_both_toggles(enabled: bool) -> None:  # no o
     assert CODE_EXEC_MARKER not in rendered
 
 
+@pytest.mark.parametrize("enabled", [True, False])
+def test_formula_oversized_literal_does_not_raise(enabled: bool) -> None:
+    """An astronomically large integer literal overflows float conversion; the evaluator must keep
+    its no-raise contract (reject controls-on / inert canary controls-off), never propagate the
+    OverflowError out of evaluate_formula."""
+    ok, rendered = _g(enabled).evaluate_formula("9" * 400)
+    if enabled:
+        assert (ok, rendered) == (False, "rejected: input is not restricted arithmetic")
+    else:
+        assert ok is True and CODE_EXEC_MARKER in rendered
+
+
 def test_formula_never_executes(tmp_path) -> None:
     """SAFETY regression guard: a payload whose only effect requires REAL code execution must never
     produce that effect in either state. If a real sink is ever reintroduced, this test fails."""
