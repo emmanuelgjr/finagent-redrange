@@ -5,6 +5,7 @@
     python -m finagent_redrange run --controls on     # only the controls-on pass
     python -m finagent_redrange auto                  # run the autonomous attacker
     python -m finagent_redrange robustness            # measure control-bypass robustness
+    python -m finagent_redrange eval --model claude   # per-scenario landing rate over N trials
 
 By default `run` runs BOTH passes (off then on) so the scorecard shows the mitigation effect.
 """
@@ -18,7 +19,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from finagent_redrange import exports
-from finagent_redrange.attacker import robustness
+from finagent_redrange.attacker import model_eval, robustness
 from finagent_redrange.attacker.engine import (
     AutonomousReport,
     LLMPlanner,
@@ -221,6 +222,26 @@ def run_robustness(args: argparse.Namespace) -> None:
     )
 
 
+def run_eval(args: argparse.Namespace) -> None:
+    """Measure per-scenario landing RATE over N trials (real variance needs --model claude)."""
+    controls_on = args.controls == "on"
+    evals = model_eval.run_model_eval(
+        SCENARIOS,
+        partial(build_agent, args.model, controls_on),
+        args.trials,
+        controls_on=controls_on,
+    )
+    model_eval.write(evals, RESULTS_DIR, model=args.model, controls_on=controls_on)
+    state = "controls-on" if controls_on else "controls-off"
+    print(f"Wrote {RESULTS_DIR / 'model_eval.md'} — {args.trials} trials/scenario, {state}\n")
+    for e in evals:
+        lo, hi = e.ci
+        print(
+            f"  {e.scenario_id}: {e.landed}/{e.trials} landed ({100 * e.rate:.0f}%) "
+            f"[95% CI {100 * lo:.0f}-{100 * hi:.0f}%]"
+        )
+
+
 def load_dotenv() -> None:
     """Populate os.environ from a `.env` file (no dependency) so the documented
     `cp .env.example .env` flow works for real-model runs.
@@ -300,6 +321,14 @@ def main() -> None:
         help="measure control-bypass robustness of the heuristic guardrails vs evasion transforms",
     )
     rb.set_defaults(func=run_robustness)
+    ev = sub.add_parser(
+        "eval",
+        help="measure per-scenario landing RATE over N trials (real variance needs --model claude)",
+    )
+    ev.add_argument("--model", default="echo", help="echo (offline, deterministic) | claude")
+    ev.add_argument("--trials", type=int, default=20, help="trials per scenario (default 20)")
+    ev.add_argument("--controls", default="off", choices=["off", "on"])
+    ev.set_defaults(func=run_eval)
     args = p.parse_args()
     try:
         args.func(args)

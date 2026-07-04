@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from finagent_redrange.llm.client import LLMClient
+from finagent_redrange.target.embeddings import cosine, embed
 from finagent_redrange.types import (
     RETRIEVAL_TOOL,
     SYSTEM_PROMPT_CANARY,
@@ -48,11 +49,17 @@ class RetrievedChunk:
     #: however well it matches the query (OWASP LLM08: a shared vector store leaking another
     #: tenant's record).
     audience: str | None = None
+    #: The chunk's embedding vector, computed at ingest — this is a *real* vector store, so
+    #: retrieval ranks by cosine similarity, not keyword overlap. Excluded from eq/repr (it's a
+    #: derived 512-float vector) so chunk identity stays keyed on content.
+    embedding: list[float] = field(default_factory=list, compare=False, repr=False)
 
     @staticmethod
     def of(text: str, source: str, audience: str | None = None) -> RetrievedChunk:
         digest = hashlib.sha256(text.encode()).hexdigest()
-        return RetrievedChunk(text=text, source=source, sha256=digest, audience=audience)
+        return RetrievedChunk(
+            text=text, source=source, sha256=digest, audience=audience, embedding=embed(text)
+        )
 
 
 @dataclass
@@ -87,12 +94,12 @@ class KnowledgeStore:
         )
 
     def retrieve(self, query: str, k: int = 3) -> list[RetrievedChunk]:
-        # TODO(you): replace naive keyword overlap with real embedding retrieval.
-        scored = sorted(
-            self.chunks,
-            key=lambda c: sum(w in c.text.lower() for w in query.lower().split()),
-            reverse=True,
-        )
+        """Top-k retrieval by cosine similarity over the chunk embeddings — a real (if small)
+        vector store. Ranking is what surfaces a chunk when the corpus exceeds k, so the
+        vector/embedding-weakness scenario exercises genuine similarity search, not keyword overlap.
+        """
+        q = embed(query)
+        scored = sorted(self.chunks, key=lambda c: cosine(c.embedding, q), reverse=True)
         return scored[:k]
 
     # -- attacker affordances (used by scenarios only) ---------------------------------

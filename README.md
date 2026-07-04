@@ -36,7 +36,7 @@ specific guardrails close each one** — end to end, from POC through regression
 | **Result** | every attack 🔴 exploited (controls off) → 🟢 blocked (controls on); mean AIRQ heuristic **High → Medium** |
 | **Extras** | permission-checked tool loop · sweep + **adaptive-LLM** autonomous attacker · **control-bypass robustness eval** (measured guardrail bypass rates) · semantic real-model oracle · md / json / **html** scorecard |
 | **Handouts** | ready-to-use exports for security teams — **Sigma** detection pack (measured precision) · **SARIF 2.1.0** findings · **GSN assurance case** · **regulatory crosswalk** (NIST/ISO 42001/EU AI Act) · **ATLAS Navigator** coverage layer. See [docs/HANDOUTS.md](docs/HANDOUTS.md) |
-| **Runs** | fully offline & deterministic — **no API key** · 152 tests green in CI (Python 3.11 / 3.12) |
+| **Runs** | fully offline & deterministic — **no API key** · 161 tests green in CI (Python 3.11 / 3.12) |
 | **Try it** | `pip install finagent-redrange && python -m finagent_redrange run` (or `pip install -e ".[dev]"` from a clone) |
 
 <p align="center">
@@ -170,6 +170,7 @@ python -m finagent_redrange run             # all 13 scenarios, controls off the
 python -m finagent_redrange run --handouts  # + Sigma pack, SARIF, GSN assurance case (docs/HANDOUTS.md)
 python -m finagent_redrange auto            # turn the autonomous attacker loose on an objective
 python -m finagent_redrange robustness      # measure guardrail bypass rates vs evasion transforms
+python -m finagent_redrange eval --trials 20  # per-scenario landing rate + 95% CI (real: --model claude)
 
 # against a real model (full tool-execution loop with permission-checked tools)
 cp .env.example .env             # add ANTHROPIC_API_KEY
@@ -194,8 +195,8 @@ its precision is validated.
 
 | Package | Responsibility |
 |---|---|
-| `target/` | The system under test — a mock banking agent: a **plan→act→observe tool loop** over permission-checked tools, with **toggleable** input / retrieval / action / output guardrails |
-| `attacker/` | Red-team engine: scripted `run_campaign` + autonomous `run_autonomous` (composes seeds × transforms until an oracle fires) |
+| `target/` | The system under test — a mock banking agent: a **plan→act→observe tool loop** over permission-checked tools, with **toggleable** input / retrieval / action / output guardrails; RAG retrieval is a real (offline) **vector store** (`embeddings.py`: char-trigram hashing + cosine) |
+| `attacker/` | Red-team engine: scripted `run_campaign` + autonomous `run_autonomous` (seeds × transforms) + **control-bypass robustness eval** (`robustness.py`) + **landing-rate eval** with Wilson CIs (`model_eval.py`) |
 | `scenarios/` | One attack class per file (13): the 9 single-agent scenarios (indirect prompt injection, data poisoning, excessive agency, system-prompt leakage, unsafe output handling, vector/embedding weakness, unbounded consumption, supply chain, multimodal injection) + 4 multi-agent scenarios (insecure inter-agent comms, rogue agent, cascading failures, unexpected code execution) — full OWASP LLM Top 10 **and** full Agentic Top 10 coverage |
 | `target/multi_agent.py` | An in-memory multi-agent subsystem (orchestrator + payments/fraud/compute sub-agents over a typed message channel) with four toggleable inter-agent controls — the target surface for the OWASP Agentic Top 10 scenarios (ASI05/07/08/10) |
 | `scoring/` | Framework crosswalk (OWASP / ATLAS / NIST) + AIRQ risk scoring + scorecard renderer (md / json / html) |
@@ -253,6 +254,12 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
   least-privilege authorization), **cascading failures** (an unbounded escalation storm → a hop
   budget), and **unexpected code execution** (formula injection → a restricted-arithmetic evaluator,
   modeled with **zero real code execution**). This completes the **full OWASP Agentic Top 10**.
+- ~~Real embedding store for LLM08 + landing-rate statistics~~ ✅ shipped — retrieval is now a real
+  (offline, deterministic) **vector store** (`target/embeddings.py`: bag-of-character-trigrams +
+  cosine), so the vector/embedding-weakness scenario surfaces the foreign record by *similarity
+  ranking* over a corpus larger than k — not because k ≥ corpus. And a `eval` command measures each
+  scenario's **landing rate over N trials** with a 95% Wilson score interval (`attacker/model_eval.py`,
+  real run-to-run variance with `--model claude`) — statistics, not a single anecdote.
 - ~~Publish to PyPI~~ ✅ shipped — [`finagent-redrange`](https://pypi.org/project/finagent-redrange/)
   on PyPI (`pip install finagent-redrange`), released via a secure OIDC Trusted-Publishing workflow
   (`.github/workflows/publish.yml`) — no token stored.
