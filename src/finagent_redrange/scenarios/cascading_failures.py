@@ -37,6 +37,7 @@ class CascadingFailuresScenario(Scenario):
         "Cap inter-agent hops per task and break re-delegation loops so one agent's faulty output "
         "can't amplify into a system-wide escalation storm."
     )
+    invokes_model = False  # scripted inter-agent exchange — deterministic, no LLM call
 
     owasp_llm = ["LLM10"]  # Unbounded Consumption (inter-agent relay exhaustion)
     owasp_agentic = ["T4"]  # Resource Overload

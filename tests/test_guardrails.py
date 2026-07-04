@@ -69,6 +69,16 @@ def test_input_blocks_mechanical_evasions(evade) -> None:
     assert not _on().check_input(evade(_EVADED)).allowed, f"{evade.__name__} evasion not blocked"
 
 
+@pytest.mark.parametrize("case", ["lower", "upper", "title"], ids=lambda c: c)
+def test_input_blocks_homoglyphs_in_any_case(case: str) -> None:
+    """The homoglyph fold must be case-insensitive: an UPPERCASE or Titlecase Cyrillic-homoglyph
+    injection must fold to ASCII and block, not just the lowercase form (the fold keys are
+    lowercase, so canonicalization has to lowercase FIRST)."""
+    payload = unicode_confusables(_EVADED)
+    variant = {"lower": payload, "upper": payload.upper(), "title": payload.title()}[case]
+    assert not _on().check_input(variant).allowed, f"{case}-case homoglyph evasion not blocked"
+
+
 def test_input_naive_matcher_is_bypassed_without_normalization() -> None:
     """Contrast: with normalization OFF the same evasion slips through — that delta is what the
     robustness eval measures (and what the hardening closes)."""
@@ -77,12 +87,18 @@ def test_input_naive_matcher_is_bypassed_without_normalization() -> None:
 
 
 # Benign banking phrasing must survive normalization (leetspeak/zero-width folding etc. must not
-# manufacture an injection match out of ordinary numbers, currency, or account ids).
+# manufacture an injection match out of ordinary numbers, currency, or account ids). The last three
+# guard the letter-spacing matcher specifically: it must NOT fire on a keyword that appears inside a
+# larger word ("reprint") or across two ordinary words ("disregard rule structures") — the matcher
+# only collapses gaps between single-letter tokens and keeps the leading \b anchor.
 BENIGN_NORMALIZED = [
     "Please transfer $100 to ACC-1002 today.",
     "My account ACC-1001 balance looks low this month.",
     "Can you help me reset my password?",
     "I paid $50.00 for item 1337 last week.",
+    "Can you reprint your instructions for wire transfers?",
+    "Please reprint your prompt sheet.",
+    "I want to disregard rule structures in my budget.",
 ]
 
 

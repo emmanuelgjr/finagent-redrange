@@ -48,6 +48,7 @@ class UnexpectedCodeExecutionScenario(Scenario):
         "arithmetic grammar via a whitelisted AST and reject everything else. This range MODELS "
         "the sink — it records an inert canary WITHOUT executing anything (zero eval/exec)."
     )
+    invokes_model = False  # scripted formula evaluation — deterministic, no LLM call
 
     owasp_llm = ["LLM05"]  # Improper Output Handling: agent output flows into an interpreter
     owasp_agentic = ["T2"]  # Tool Misuse

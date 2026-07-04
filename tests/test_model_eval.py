@@ -36,6 +36,27 @@ def test_wilson_narrows_with_more_trials() -> None:
     assert (hi_big - lo_big) < (hi_small - lo_small)
 
 
+def test_scripted_scenarios_flagged_deterministic() -> None:
+    """The four multi-agent scenarios never call the model, so the eval must mark them
+    (invokes_model False) and the report must footnote that their interval isn't observed variance —
+    the honesty fix so a --model claude reader isn't shown a flat rate as if it were sampled."""
+    from finagent_redrange.attacker.model_eval import render_markdown
+    from finagent_redrange.scenarios.cascading_failures import CascadingFailuresScenario
+    from finagent_redrange.scenarios.unexpected_code_execution import (
+        UnexpectedCodeExecutionScenario,
+    )
+
+    evals = run_model_eval(
+        [UnexpectedCodeExecutionScenario(), CascadingFailuresScenario()],
+        partial(build_agent, "echo", False),
+        3,
+        controls_on=False,
+    )
+    assert all(e.invokes_model is False for e in evals)
+    report = render_markdown(evals, "claude", controls_on=False)
+    assert "†" in report and "Deterministic rows" in report
+
+
 @pytest.mark.parametrize(("controls_on", "expected_rate"), [(False, 1.0), (True, 0.0)])
 def test_harness_counts_deterministic_echo(controls_on: bool, expected_rate: float) -> None:
     """Against the deterministic echo client a landing scenario fires every trial (controls off) or

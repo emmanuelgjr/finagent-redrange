@@ -45,6 +45,7 @@ class InsecureInterAgentCommsScenario(Scenario):
         "Authenticate and integrity-check every inter-agent message against its declared sender; "
         "reject forged/unsigned messages so a spoofed authorization can never drive a transfer."
     )
+    invokes_model = False  # scripted inter-agent exchange — deterministic, no LLM call
 
     owasp_llm = ["LLM06"]  # impact: the forged authorization drives an unauthorized transfer
     owasp_agentic = []  # no honest T-code for inter-agent message integrity in the crosswalk

@@ -25,6 +25,12 @@ class Scenario(ABC):
     validating_control: str
     #: short note on the mitigation for the report
     mitigation_notes: str = ""
+    #: Whether this scenario's ``attack()`` path invokes the LLM. True for the single-agent
+    #: scenarios (they call ``agent.respond()`` -> ``llm.complete()``); False for the multi-agent
+    #: scenarios, which drive a scripted, deterministic inter-agent exchange with no model call. The
+    #: landing-rate eval uses this to flag rows whose outcome can't vary run-to-run even under a
+    #: real model (so it never presents a scripted scenario's flat rate as if it were sampled).
+    invokes_model: bool = True
 
     @abstractmethod
     def setup(self, agent: BankingAgent) -> None:

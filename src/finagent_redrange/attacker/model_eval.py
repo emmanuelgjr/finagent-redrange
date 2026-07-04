@@ -5,10 +5,14 @@ Against a real (stochastic) model, whether an attack lands varies run to run, so
 under- or over-state risk. This harness runs each scenario N times against a model and reports the
 LANDING RATE with a 95% Wilson score interval — the honest "how often does this actually land?".
 
-Offline note: the ``EchoClient`` is deterministic, so every trial is identical and the rate is 0% or
-100% with a degenerate interval. The statistics are meaningful only against a real model
-(``--model claude``), where the harness surfaces run-to-run variance. The Wilson math and the
-plumbing are CI-tested here; the variance is an opt-in real-model measurement.
+Two honesty caveats, both surfaced in the report:
+  * The ``EchoClient`` is deterministic, so under ``--model echo`` every trial is identical and the
+    rate is 0% or 100% with a degenerate interval.
+  * The four multi-agent scenarios drive a SCRIPTED inter-agent exchange and never call the model
+    (``Scenario.invokes_model is False``), so their outcome is deterministic *even under a real
+    model* — their interval is the Wilson small-sample width, not observed run-to-run variance.
+Run-to-run variance is therefore only meaningful for the LLM-driven scenarios under ``--model
+claude``. The Wilson math and the plumbing are CI-tested here.
 """
 
 from __future__ import annotations
@@ -48,6 +52,9 @@ class ScenarioEval:
     trials: int
     landed: int
     controls_on: bool
+    #: False for scripted scenarios that never call the model — their rate can't vary run-to-run
+    #: even under a real model, so the report flags the interval as structurally degenerate.
+    invokes_model: bool = True
 
     @property
     def rate(self) -> float:
@@ -68,13 +75,23 @@ def run_model_eval(
     """Run each scenario ``trials`` times against a FRESH agent per trial; count oracle firings.
 
     ``make_agent`` returns a clean agent (with the desired control state baked in) so no adversarial
-    state leaks between trials. Under a real model the per-trial outcome varies; under EchoClient it
-    is constant.
+    state leaks between trials. For an LLM-driven scenario under a real model the per-trial outcome
+    can vary; under the EchoClient, or for a scripted (``invokes_model`` False) scenario under any
+    model, it is constant — the report flags those rows so a flat rate is never read as sampled.
     """
     out: list[ScenarioEval] = []
     for scenario in scenarios:
         landed = sum(run_campaign(scenario, make_agent()).succeeded for _ in range(trials))
-        out.append(ScenarioEval(scenario.id, scenario.title, trials, landed, controls_on))
+        out.append(
+            ScenarioEval(
+                scenario.id,
+                scenario.title,
+                trials,
+                landed,
+                controls_on,
+                invokes_model=scenario.invokes_model,
+            )
+        )
     return out
 
 
@@ -99,14 +116,24 @@ def render_markdown(evals: list[ScenarioEval], model: str, controls_on: bool) ->
             "> run-to-run variance; the numbers below only exercise the harness + interval math.",
             "",
         ]
+    scripted = [e for e in evals if not e.invokes_model]
+    if scripted:
+        lines += [
+            "> **Deterministic rows (†):** scripted scenarios that never call the model. Their",
+            "> outcome can't vary run-to-run *even under `--model claude`*, so the interval is the",
+            "> Wilson small-sample width, not observed variance. Marked with † below.",
+            "",
+        ]
     lines += [
         "| Scenario | Trials | Landed | Landing rate | 95% CI (Wilson) |",
         "|---|---|---|---|---|",
     ]
     for e in evals:
         lo, hi = e.ci
+        dagger = "" if e.invokes_model else " †"
         lines.append(
-            f"| {e.title} | {e.trials} | {e.landed} | {_pct(e.rate)} | {_pct(lo)}–{_pct(hi)} |"
+            f"| {e.title}{dagger} | {e.trials} | {e.landed} | {_pct(e.rate)} | "
+            f"{_pct(lo)}–{_pct(hi)} |"
         )
     return "\n".join(lines) + "\n"
 

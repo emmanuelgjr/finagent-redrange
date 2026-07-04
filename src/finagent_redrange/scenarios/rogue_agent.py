@@ -38,6 +38,7 @@ class RogueAgentScenario(Scenario):
         "Authorize every sub-agent action against its role's capability allowlist; a compromised "
         "compute agent must not invoke payment actions even when its messages are authentic."
     )
+    invokes_model = False  # scripted inter-agent exchange — deterministic, no LLM call
 
     owasp_llm = ["LLM06"]  # impact: the out-of-mandate action is an unauthorized transfer
     owasp_agentic = ["T3"]  # Privilege Compromise

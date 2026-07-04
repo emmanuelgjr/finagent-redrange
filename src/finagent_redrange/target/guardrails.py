@@ -63,7 +63,8 @@ _URL = re.compile(r"https?://([^\s/]+)(?:/[^\s)>\]]*)?", re.IGNORECASE)
 # eval (attacker/robustness.py) measures the before/after this makes. A *semantic* paraphrase is
 # out of reach of any string normalization — that residual is what the eval reports as still open.
 
-#: Common Cyrillic/Greek homoglyphs folded back to ASCII before matching.
+#: Common Cyrillic/Greek homoglyphs folded back to ASCII before matching. Keys are LOWERCASE, so the
+#: canonicalizer must lowercase BEFORE applying this (an uppercase homoglyph lowercases to a key).
 _CONFUSABLE_FOLD = {
     "а": "a", "с": "c", "е": "e", "і": "i", "о": "o", "р": "p", "ѕ": "s", "х": "x", "у": "y",
     "ѐ": "e", "ո": "n", "ⅼ": "l",
@@ -76,26 +77,40 @@ _LEET_FOLD = str.maketrans(
 )
 
 
-#: The injection/marker patterns with literal spaces AND word-boundary anchors removed, matched as
-#: substrings against a fully de-spaced canonical form so letter-spaced payloads ("i g n o r e ...")
-#: are still caught — after de-spacing there are no word boundaries left for ``\b`` to anchor to.
+#: The injection/marker patterns with literal spaces removed — matched against a letter-despaced
+#: form so a letter-spaced payload ("i g n o r e ...", collapsing to "ignore...") is still caught.
+#: The LEADING ``\b`` is kept so an alternative can never match inside a larger word (e.g. "print
+#: your instructions" must not fire on the "reprint" in "reprint your instructions"); a TRAILING
+#: ``\b`` is dropped, because a collapsed letter-spaced payload runs the keyword straight into the
+#: next letters ("...instructionsandreveal...") with no boundary for it to anchor to.
 def _nospace(pattern: re.Pattern[str]) -> re.Pattern[str]:
-    return re.compile(pattern.pattern.replace(" ", "").replace(r"\b", ""), re.IGNORECASE)
+    p = pattern.pattern.replace(" ", "")
+    if p.endswith(r"\b"):
+        p = p[:-2]
+    return re.compile(p, re.IGNORECASE)
 
 
 _DIRECT_INJECTION_NOSPACE = _nospace(_DIRECT_INJECTION)
 _INSTRUCTION_MARKERS_NOSPACE = _nospace(_INSTRUCTION_MARKERS)
 
+#: A single space sitting between two single-letter tokens — i.e. the gaps a letter-spacing evasion
+#: inserts. Collapsing ONLY these folds "i g n o r e ..." back to words while leaving ordinary
+#: multi-letter prose ("disregard rule structures") untouched, so normal words never glue into a
+#: keyword substring.
+_LETTER_GAP = re.compile(r"(?<=\b\w) (?=\w\b)")
+
 
 def _canonicalize(text: str) -> str:
-    """Fold purely-mechanical evasions (NFKC, unicode homoglyphs, zero-width splits, leetspeak,
-    case) into a canonical lowercase form used ONLY for heuristic matching — never for content that
-    reaches the model. Whitespace runs collapse to a single space (a de-spaced copy is matched
-    separately by the caller for letter-spacing)."""
+    """Fold purely-mechanical evasions (NFKC, case, unicode homoglyphs, zero-width splits, leet)
+    into a canonical lowercase form used ONLY for heuristic matching — never for content that
+    reaches the model. Lowercasing happens BEFORE the homoglyph fold so uppercase/titlecase
+    homoglyphs fold too (the fold keys are lowercase). Whitespace runs collapse to a single space;
+    the caller also matches a letter-despaced copy for letter-spacing."""
     t = unicodedata.normalize("NFKC", text)
     t = t.translate(_ZERO_WIDTH_FOLD)
+    t = t.lower()
     t = "".join(_CONFUSABLE_FOLD.get(ch, ch) for ch in t)
-    t = t.lower().translate(_LEET_FOLD)
+    t = t.translate(_LEET_FOLD)
     return re.sub(r"\s+", " ", t)
 
 
@@ -103,11 +118,12 @@ def _matches(
     pattern: re.Pattern[str], nospace: re.Pattern[str], text: str, normalize: bool
 ) -> bool:
     """True if ``text`` hits the heuristic. With ``normalize`` off, the raw pattern only (the naive
-    baseline the robustness eval contrasts against); with it on, the canonical + de-spaced forms."""
+    baseline the robustness eval contrasts against); with it on, the canonical form plus a
+    letter-despaced copy matched by the space-stripped (but still ``\\b``-anchored) pattern."""
     if not normalize:
         return bool(pattern.search(text))
     canon = _canonicalize(text)
-    return bool(pattern.search(canon) or nospace.search(canon.replace(" ", "")))
+    return bool(pattern.search(canon) or nospace.search(_LETTER_GAP.sub("", canon)))
 
 
 #: Domains the agent is allowed to surface in answers. Everything else is stripped.
