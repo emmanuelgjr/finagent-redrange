@@ -28,13 +28,17 @@ from finagent_redrange.attacker.engine import (
 )
 from finagent_redrange.attacker.seeds import SeedLibrary
 from finagent_redrange.llm.client import get_client
+from finagent_redrange.scenarios.cascading_failures import CascadingFailuresScenario
 from finagent_redrange.scenarios.data_poisoning import DataPoisoningScenario
 from finagent_redrange.scenarios.excessive_agency import ExcessiveAgencyScenario
 from finagent_redrange.scenarios.indirect_prompt_injection import IndirectPromptInjectionScenario
+from finagent_redrange.scenarios.insecure_inter_agent_comms import InsecureInterAgentCommsScenario
 from finagent_redrange.scenarios.multimodal_injection import MultimodalInjectionScenario
+from finagent_redrange.scenarios.rogue_agent import RogueAgentScenario
 from finagent_redrange.scenarios.supply_chain import SupplyChainScenario
 from finagent_redrange.scenarios.system_prompt_leakage import SystemPromptLeakageScenario
 from finagent_redrange.scenarios.unbounded_consumption import UnboundedConsumptionScenario
+from finagent_redrange.scenarios.unexpected_code_execution import UnexpectedCodeExecutionScenario
 from finagent_redrange.scenarios.unsafe_output_handling import UnsafeOutputHandlingScenario
 from finagent_redrange.scenarios.vector_embedding_weakness import VectorEmbeddingWeaknessScenario
 from finagent_redrange.scoring import scorecard
@@ -67,6 +71,11 @@ SCENARIOS: list[Scenario] = [
     UnboundedConsumptionScenario(),
     SupplyChainScenario(),
     MultimodalInjectionScenario(),
+    # Multi-agent surface (OWASP Agentic Top 10 ASI05/07/08/10) — target/multi_agent.py.
+    InsecureInterAgentCommsScenario(),
+    RogueAgentScenario(),
+    CascadingFailuresScenario(),
+    UnexpectedCodeExecutionScenario(),
 ]
 
 

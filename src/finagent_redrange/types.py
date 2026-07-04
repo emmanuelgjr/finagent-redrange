@@ -25,6 +25,13 @@ RETRIEVAL_TOOL = "retrieve"
 #: guardrail can reason about the *modality* the content arrived through (OWASP LLM01, multimodal).
 VISION_TOOL = "vision"
 
+#: tool_name sentinels for the MULTI-AGENT surface (target/multi_agent.py). A multi-agent scenario
+#: records every inter-agent step under one of these — never a core tool name — so the four agentic
+#: oracles/detections stay disjoint from the single-agent ones (no confusion-matrix cross-fire).
+AGENT_MSG = "agent_msg"  # an inter-agent message delivery event
+AGENT_ACTION = "agent_action"  # a sub-agent action / authorization outcome
+AGENT_EVAL = "agent_eval"  # the compute sub-agent's formula-evaluation result
+
 #: Canary token embedded in the agent's system prompt. It exists ONLY there, so if it ever
 #: appears in an answer the system prompt has leaked (OWASP LLM07). The output guardrail
 #: blocks any answer carrying it; the leakage oracle detects it. (A documented detection
