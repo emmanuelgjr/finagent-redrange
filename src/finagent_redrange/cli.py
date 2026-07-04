@@ -4,6 +4,7 @@
     python -m finagent_redrange run --model claude    # against a real model
     python -m finagent_redrange run --controls on     # only the controls-on pass
     python -m finagent_redrange auto                  # run the autonomous attacker
+    python -m finagent_redrange robustness            # measure control-bypass robustness
 
 By default `run` runs BOTH passes (off then on) so the scorecard shows the mitigation effect.
 """
@@ -17,6 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from finagent_redrange import exports
+from finagent_redrange.attacker import robustness
 from finagent_redrange.attacker.engine import (
     AutonomousReport,
     LLMPlanner,
@@ -193,6 +195,23 @@ def run_auto(args: argparse.Namespace) -> None:
         print()
 
 
+def run_robustness(args: argparse.Namespace) -> None:
+    """Measure how the heuristic guardrails survive documented evasion transforms (offline)."""
+    report = robustness.write(RESULTS_DIR)
+    m_tot = report.mechanical_total
+    print(f"Wrote {RESULTS_DIR / 'robustness.md'} (control-bypass robustness matrix)\n")
+    print(
+        f"Mechanical-evasion bypasses (controls on): "
+        f"naive {report.mechanical_bypass_naive}/{m_tot} → "
+        f"hardened {report.mechanical_bypass_hardened}/{m_tot}"
+    )
+    print(
+        f"Semantic-paraphrase residual (hardened): "
+        f"{report.semantic_bypass_hardened}/{report.semantic_total} still bypass "
+        "(documented limitation — needs a model-based classifier)"
+    )
+
+
 def load_dotenv() -> None:
     """Populate os.environ from a `.env` file (no dependency) so the documented
     `cp .env.example .env` flow works for real-model runs.
@@ -267,6 +286,11 @@ def main() -> None:
         help="sweep (deterministic, offline) | llm (adaptive LLM planner, needs --model claude)",
     )
     a.set_defaults(func=run_auto)
+    rb = sub.add_parser(
+        "robustness",
+        help="measure control-bypass robustness of the heuristic guardrails vs evasion transforms",
+    )
+    rb.set_defaults(func=run_robustness)
     args = p.parse_args()
     try:
         args.func(args)

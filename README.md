@@ -130,6 +130,20 @@ input filter but the **output canary detector** catches the leak, and the direct
 caught by the input filter. The headline defensive result: *the control holds even as the attacker
 works through every strategy it has.*
 
+### Control-bypass robustness eval
+
+"Controls on" only ever meant *held against the fixed campaign transforms*. `python -m
+finagent_redrange robustness` replaces that with a **measured bypass rate**: it sweeps each
+string-matching guardrail (user-input injection, multimodal OCR injection, retrieval
+instruction-markers) against documented evasion transforms — unicode homoglyphs, zero-width
+splitting, leetspeak, letter-spacing, and semantic paraphrase — with the control on, under a
+*naive* matcher and a *hardened* (normalization-on) one. The honest result written to
+`results/robustness.md`: the four **mechanical** evasions bypass the naive matcher **100%** but are
+folded back to **0%** by normalization, while the **semantic paraphrase still bypasses both** — the
+irreducible gap of a string heuristic, closeable only by a model-based classifier. The structural
+controls (output PII filter, action gate, consumption budget, supply-chain gate) aren't string
+matchers, so rephrasing doesn't defeat them and they're reported out of scope rather than omitted.
+
 ## Quickstart
 
 ```bash
@@ -138,9 +152,10 @@ python -m venv .venv && source .venv/bin/activate   # Windows (PowerShell): .ven
 pip install -e ".[dev]"
 
 # offline, deterministic (no API key needed) — uses the EchoClient
-python -m finagent_redrange run             # all 8 scenarios, controls off then on -> scorecard
+python -m finagent_redrange run             # all 9 scenarios, controls off then on -> scorecard
 python -m finagent_redrange run --handouts  # + Sigma pack, SARIF, GSN assurance case (docs/HANDOUTS.md)
 python -m finagent_redrange auto            # turn the autonomous attacker loose on an objective
+python -m finagent_redrange robustness      # measure guardrail bypass rates vs evasion transforms
 
 # against a real model (full tool-execution loop with permission-checked tools)
 cp .env.example .env             # add ANTHROPIC_API_KEY
@@ -211,6 +226,11 @@ Full design notes for contributors (human or agent) live in [CLAUDE.md](CLAUDE.m
 - ~~Multimodal attack surfaces~~ ✅ shipped — a **multimodal injection** scenario: an instruction
   hidden in an uploaded image's OCR text, blocked by a multimodal input guardrail that treats
   extracted image text as untrusted data (`target/agent.py` gained an optional `images=` surface).
+- ~~Control-bypass robustness eval~~ ✅ shipped — a `robustness` command that **measures** each
+  string-matching guardrail's bypass rate against documented evasion transforms (homoglyphs,
+  zero-width, leetspeak, letter-spacing, semantic paraphrase). It drove a normalization hardening
+  pass that folds the mechanical evasions (naive 100% → hardened 0% bypass) and honestly reports the
+  residual semantic-paraphrase gap (`attacker/robustness.py`, `target/guardrails.py`).
 - ~~Publish to PyPI~~ ✅ shipped — [`finagent-redrange`](https://pypi.org/project/finagent-redrange/)
   on PyPI (`pip install finagent-redrange`), released via a secure OIDC Trusted-Publishing workflow
   (`.github/workflows/publish.yml`) — no token stored.

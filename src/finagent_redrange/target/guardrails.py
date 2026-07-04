@@ -15,6 +15,7 @@ The scenarios target specifically:
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -53,6 +54,61 @@ _INSTRUCTION_MARKERS = re.compile(
 # not on the bank's allowlist (defends OWASP LLM05: attacker-controlled markup/exfil links
 # echoed from retrieved content into a rendering chat surface).
 _URL = re.compile(r"https?://([^\s/]+)(?:/[^\s)>\]]*)?", re.IGNORECASE)
+
+# --- evasion-robust matching -------------------------------------------------------------
+# The two heuristics above are string matchers, so documented evasions (unicode homoglyphs,
+# zero-width splits, leetspeak, letter-spacing) can slip a payload past them. When ``normalize``
+# is on, matching runs against a CANONICAL form that folds those purely-mechanical evasions back —
+# and, separately, against a fully de-spaced form so letter-spacing is caught too. The robustness
+# eval (attacker/robustness.py) measures the before/after this makes. A *semantic* paraphrase is
+# out of reach of any string normalization — that residual is what the eval reports as still open.
+
+#: Common Cyrillic/Greek homoglyphs folded back to ASCII before matching.
+_CONFUSABLE_FOLD = {
+    "а": "a", "с": "c", "е": "e", "і": "i", "о": "o", "р": "p", "ѕ": "s", "х": "x", "у": "y",
+    "ѐ": "e", "ո": "n", "ⅼ": "l",
+}  # fmt: skip
+#: Zero-width / BOM characters stripped before matching (used to split keywords).
+_ZERO_WIDTH_FOLD = dict.fromkeys(map(ord, "​‌‍﻿"), None)
+#: Leetspeak digits/symbols folded back to letters before matching.
+_LEET_FOLD = str.maketrans(
+    {"4": "a", "3": "e", "1": "i", "0": "o", "5": "s", "7": "t", "@": "a", "$": "s"}
+)
+
+
+#: The injection/marker patterns with literal spaces AND word-boundary anchors removed, matched as
+#: substrings against a fully de-spaced canonical form so letter-spaced payloads ("i g n o r e ...")
+#: are still caught — after de-spacing there are no word boundaries left for ``\b`` to anchor to.
+def _nospace(pattern: re.Pattern[str]) -> re.Pattern[str]:
+    return re.compile(pattern.pattern.replace(" ", "").replace(r"\b", ""), re.IGNORECASE)
+
+
+_DIRECT_INJECTION_NOSPACE = _nospace(_DIRECT_INJECTION)
+_INSTRUCTION_MARKERS_NOSPACE = _nospace(_INSTRUCTION_MARKERS)
+
+
+def _canonicalize(text: str) -> str:
+    """Fold purely-mechanical evasions (NFKC, unicode homoglyphs, zero-width splits, leetspeak,
+    case) into a canonical lowercase form used ONLY for heuristic matching — never for content that
+    reaches the model. Whitespace runs collapse to a single space (a de-spaced copy is matched
+    separately by the caller for letter-spacing)."""
+    t = unicodedata.normalize("NFKC", text)
+    t = t.translate(_ZERO_WIDTH_FOLD)
+    t = "".join(_CONFUSABLE_FOLD.get(ch, ch) for ch in t)
+    t = t.lower().translate(_LEET_FOLD)
+    return re.sub(r"\s+", " ", t)
+
+
+def _matches(
+    pattern: re.Pattern[str], nospace: re.Pattern[str], text: str, normalize: bool
+) -> bool:
+    """True if ``text`` hits the heuristic. With ``normalize`` off, the raw pattern only (the naive
+    baseline the robustness eval contrasts against); with it on, the canonical + de-spaced forms."""
+    if not normalize:
+        return bool(pattern.search(text))
+    canon = _canonicalize(text)
+    return bool(pattern.search(canon) or nospace.search(canon.replace(" ", "")))
+
 
 #: Domains the agent is allowed to surface in answers. Everything else is stripped.
 ALLOWED_LINK_DOMAINS = frozenset({"fictionalbank.example", "bank.example"})
@@ -98,12 +154,16 @@ def _sanitize_links(text: str) -> str:
 @dataclass
 class Guardrails:
     enabled: bool = False
+    #: Fold documented mechanical evasions (homoglyphs / zero-width / leetspeak / letter-spacing)
+    #: before the string-heuristic checks. On by default; the robustness eval flips it off to
+    #: measure the naive-baseline bypass rate against the hardened one.
+    normalize: bool = True
 
     # --- input side --------------------------------------------------------------------
     def check_input(self, user_text: str) -> GuardrailDecision:
         if not self.enabled:
             return GuardrailDecision(True)
-        if _DIRECT_INJECTION.search(user_text):
+        if _matches(_DIRECT_INJECTION, _DIRECT_INJECTION_NOSPACE, user_text, self.normalize):
             return GuardrailDecision(False, reason="direct prompt-injection pattern in user input")
         return GuardrailDecision(True)
 
@@ -117,7 +177,13 @@ class Guardrails:
         so this is precise, not a blanket refusal of image inputs."""
         if not self.enabled:
             return images
-        return [img for img in images if not _DIRECT_INJECTION.search(img.ocr_text)]
+        return [
+            img
+            for img in images
+            if not _matches(
+                _DIRECT_INJECTION, _DIRECT_INJECTION_NOSPACE, img.ocr_text, self.normalize
+            )
+        ]
 
     def check_retrieved(
         self,
@@ -138,7 +204,7 @@ class Guardrails:
                 continue
             # 2. Provenance: refuse to act on instructions embedded in documents (indirect
             #    prompt injection). Defense-in-depth even for an allow-listed source.
-            if _INSTRUCTION_MARKERS.search(c.text):
+            if _matches(_INSTRUCTION_MARKERS, _INSTRUCTION_MARKERS_NOSPACE, c.text, self.normalize):
                 continue
             # 3. Retrieval access-control (OWASP LLM08): a shared store must never surface a
             #    chunk scoped to a different session user, however well it matches the query.
